@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0a2b21">
+<title>고스톱 — 실시간 멀티</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ============ 화투판 디자인 토큰 ============
+   felt   #0F3D2E / #0A2B21  (옻칠 다크그린)
+   ivory  #F3EAD3            (화투장 아이보리)
+   seal   #B5382F            (인주 레드)
+   gold   #C9A227            (금박)
+   blue   #2E5FA3            (청단)
+   ink    #241F1A            (먹)
+================================================ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Noto Sans KR',sans-serif;color:#F3EAD3;
+  background:radial-gradient(ellipse at 50% 30%, #14503c 0%, #0F3D2E 45%, #0A2B21 100%);
+  min-height:100vh;overscroll-behavior:none;
+}
+button{font-family:inherit;cursor:pointer;border:none}
+h1,h2,h3,.serif{font-family:'Gowun Batang',serif}
+
+/* ---------- 공통 버튼 ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 20px;border-radius:10px;font-size:16px;font-weight:700;
+  background:#1c5a44;color:#F3EAD3;border:1px solid rgba(243,234,211,.25);
+  transition:transform .08s, filter .15s}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn-gold{background:linear-gradient(160deg,#d8b545,#b8901c);color:#241F1A;border:none;
+  box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.btn-seal{background:linear-gradient(160deg,#c74538,#9c2c24);color:#fff;border:none;
+  box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.btn-ghost{background:transparent;border:1px solid rgba(243,234,211,.35)}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:8px}
+
+/* ---------- 홈 / 로비 ---------- */
+.home{max-width:430px;margin:0 auto;padding:36px 22px 40px;display:flex;flex-direction:column;gap:18px;min-height:100vh}
+.logo{text-align:center;margin:14px 0 6px}
+.logo .seal-mark{display:inline-flex;align-items:center;justify-content:center;
+  width:84px;height:84px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #d05445, #9c2c24 70%);
+  box-shadow:0 6px 18px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.15);
+  font-family:'Gowun Batang',serif;font-size:38px;font-weight:700;color:#fff;letter-spacing:2px}
+.logo h1{font-size:34px;letter-spacing:8px;margin-top:14px;color:#F3EAD3;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.logo p{font-size:13px;color:rgba(243,234,211,.55);letter-spacing:2px;margin-top:6px}
+.field label{display:block;font-size:13px;font-weight:700;color:#C9A227;margin-bottom:7px;letter-spacing:1px}
+.field input{width:100%;padding:13px 14px;border-radius:10px;font-size:17px;font-weight:500;
+  border:1px solid rgba(243,234,211,.3);background:rgba(0,0,0,.28);color:#F3EAD3;outline:none}
+.field input:focus{border-color:#C9A227}
+.per-point{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.pp{padding:11px 0;border-radius:9px;font-size:14px;font-weight:700;text-align:center;
+  background:rgba(0,0,0,.28);border:1px solid rgba(243,234,211,.25);color:#F3EAD3}
+.pp.on{background:linear-gradient(160deg,#d8b545,#b8901c);color:#241F1A;border-color:transparent}
+.divider{display:flex;align-items:center;gap:12px;color:rgba(243,234,211,.4);font-size:12px;letter-spacing:2px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(243,234,211,.18)}
+.err{background:rgba(156,44,36,.35);border:1px solid #9c2c24;color:#ffd9d4;
+  padding:10px 14px;border-radius:9px;font-size:14px}
+
+/* ---------- 대기실 ---------- */
+.wait{max-width:480px;margin:0 auto;padding:22px 18px 40px;display:flex;flex-direction:column;gap:16px}
+.room-code-card{background:rgba(0,0,0,.3);border:1px solid rgba(201,162,39,.5);border-radius:14px;
+  padding:16px 18px;text-align:center}
+.room-code-card .lbl{font-size:12px;color:#C9A227;letter-spacing:3px;font-weight:700}
+.room-code-card .code{font-family:'Gowun Batang',serif;font-size:40px;letter-spacing:10px;margin-top:4px}
+.room-code-card .pp-info{font-size:13px;color:rgba(243,234,211,.7);margin-top:6px}
+.plist{display:flex;flex-direction:column;gap:9px}
+.prow{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.25);
+  border:1px solid rgba(243,234,211,.14);border-radius:12px;padding:12px 14px}
+.prow.me{border-color:rgba(201,162,39,.6)}
+.avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Gowun Batang',serif;font-weight:700;font-size:18px;color:#fff;flex-shrink:0}
+.pname{font-size:16px;font-weight:700;flex:1;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:1px}
+.tag-host{background:#C9A227;color:#241F1A}
+.tag-off{background:rgba(255,255,255,.15);color:rgba(243,234,211,.6)}
+.tag-dealer{background:#2E5FA3;color:#fff}
+.ready-pill{font-size:13px;font-weight:700;padding:6px 13px;border-radius:99px}
+.ready-on{background:rgba(46,160,90,.25);color:#7ee2a8;border:1px solid rgba(46,160,90,.6)}
+.ready-off{background:rgba(255,255,255,.08);color:rgba(243,234,211,.5);border:1px solid rgba(243,234,211,.2)}
+.cum{font-size:13px;font-weight:700}
+.cum.pos{color:#7ee2a8}.cum.neg{color:#ff9a8e}.cum.zero{color:rgba(243,234,211,.5)}
+
+/* ---------- 게임 테이블 ---------- */
+.table-wrap{display:flex;flex-direction:column;min-height:100vh;max-width:560px;margin:0 auto;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 42%, #3fae57 0%, #2f9247 55%, #23803b 100%)}
+.topbar{display:flex;align-items:center;gap:8px;padding:8px 10px;flex-wrap:wrap;
+  background:rgba(0,0,0,.16);border-bottom:1px solid rgba(255,235,140,.3)}
+.topbar .rc{font-family:'Gowun Batang',serif;font-size:14px;letter-spacing:2px;color:#ffe45c;font-weight:700}
+.chip{font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:99px;background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.2);white-space:nowrap;color:#ffe45c}
+.chip b{color:#fff}
+.chip b.pos{color:#b6ffce}.chip b.neg{color:#ffc7bd}
+.spacer{flex:1}
+
+.opp-row{display:flex;justify-content:space-around;gap:8px;padding:10px 8px 4px}
+.seat{background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.16);border-radius:12px;
+  padding:8px 10px;min-width:100px;flex:1;max-width:170px;transition:box-shadow .3s,border-color .3s}
+.seat.turn{border-color:#ffe45c;box-shadow:0 0 14px rgba(255,228,92,.5)}
+.seat.dead{opacity:.45}
+.seat-head{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.seat-head .avatar{width:26px;height:26px;font-size:13px}
+.seat-head .nm{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80px;color:#fff}
+.seat-stats{display:flex;gap:5px;flex-wrap:wrap;font-size:11px;color:rgba(255,255,255,.9)}
+.seat-stats .sc{font-weight:900;color:#ffe45c}
+.mini-caps{display:flex;gap:2px;margin-top:5px;flex-wrap:wrap;min-height:14px}
+.rest-row{display:flex;gap:6px;padding:2px 10px;flex-wrap:wrap}
+.rest{font-size:11px;padding:4px 9px;border-radius:99px;background:rgba(0,0,0,.22);
+  border:1px dashed rgba(255,255,255,.35);color:rgba(255,255,255,.8)}
+
+.center-zone{flex:1;display:flex;flex-direction:column;justify-content:center;padding:6px 10px;position:relative;min-height:200px}
+.floor{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-content:center;
+  min-height:150px;padding:12px 8px;border-radius:16px}
+.deck-area{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 auto 10px}
+.deck-pile{position:relative;width:56px;height:84px;border-radius:8px;
+  background:linear-gradient(#e23b34,#c62828);border:2px solid #a51f1a;
+  box-shadow:3px 3px 0 rgba(165,31,26,.6), 5px 5px 0 rgba(165,31,26,.35)}
+.deck-cnt{font-size:11px;color:#fff;font-weight:800;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:99px}
+.event-toast{position:absolute;left:50%;top:8px;transform:translateX(-50%);
+  background:rgba(156,44,36,.92);color:#fff;font-family:'Gowun Batang',serif;
+  font-size:22px;font-weight:700;padding:8px 22px;border-radius:99px;letter-spacing:3px;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);animation:pop .35s;z-index:5;white-space:nowrap}
+@keyframes pop{0%{transform:translateX(-50%) scale(.4);opacity:0}100%{transform:translateX(-50%) scale(1);opacity:1}}
+
+.my-zone{background:rgba(0,0,0,.18);border-top:1px solid rgba(255,235,140,.3);padding:8px 10px 14px}
+.my-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.my-head .nm{font-weight:900;font-size:15px;color:#fff}
+.score-badge{font-size:13px;font-weight:900;color:#3a2a08;background:linear-gradient(160deg,#ffe45c,#e0a82a);
+  padding:3px 11px;border-radius:99px}
+.turn-note{font-size:13px;font-weight:800;color:#ffe45c;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.35}}
+.my-caps{display:flex;gap:4px;flex-wrap:wrap;margin:5px 0;min-height:16px}
+.hand{display:flex;gap:7px;overflow-x:auto;padding:6px 2px 4px;scrollbar-width:none}
+.hand::-webkit-scrollbar{display:none}
+
+/* ---------- 화투장 ---------- */
+.card{position:relative;flex-shrink:0;width:64px;height:96px;border-radius:9px;
+  overflow:hidden;background:#f7f0dd;border:3px solid #cf2a25;
+  box-shadow:0 2px 5px rgba(0,0,0,.35);user-select:none;
+  transition:transform .13s ease, box-shadow .13s ease}
+.card-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.card.face{animation:dealIn .34s cubic-bezier(.2,.8,.3,1) both}
+.card-badge{position:absolute;top:1px;left:2px;font-size:9px;font-weight:900;
+  color:#cf2a25;background:rgba(255,255,255,.8);border-radius:0 0 5px 0;padding:0 3px;line-height:1.35;z-index:2}
+.card.sel{transform:translateY(-13px) scale(1.05);box-shadow:0 9px 18px rgba(0,0,0,.5);
+  border-color:#ffd23c}
+.card.clickable{cursor:pointer}
+.card.clickable:active{transform:translateY(-6px)}
+.card.sm{width:52px;height:78px;border-radius:7px;border-width:2.5px}
+.card.sm .card-badge{font-size:7.5px}
+.card.xs{width:18px;height:27px;border-radius:3px;border-width:1.5px;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.card.xs .card-badge{display:none}
+.card.back{background:
+  repeating-linear-gradient(45deg,#c62828,#c62828 5px,#e23b34 5px,#e23b34 10px);
+  border-color:#cf2a25;display:flex;align-items:center;justify-content:center}
+.card.back::after{content:'';width:60%;height:60%;border:2px solid rgba(255,255,255,.6);border-radius:5px}
+.card.back.xs::after{border-width:1px}
+/* 카드 등장/딜링/먹기 모션: 노드가 새로 생길 때 1회 재생 */
+@keyframes dealIn{
+  from{opacity:0;transform:translateY(-18px) rotate(-8deg) scale(.7)}
+  to{opacity:1;transform:none}}
+/* 바닥에 탁 꽂히는 슬랩 */
+@keyframes slap{
+  0%{opacity:0;transform:translateY(-48px) rotate(15deg) scale(1.35)}
+  55%{opacity:1;transform:translateY(4px) rotate(-4deg) scale(1.06)}
+  74%{transform:translateY(-1px) rotate(1.5deg) scale(.98)}
+  100%{transform:none}}
+.floor .card.face{animation:slap .34s cubic-bezier(.3,1.35,.5,1) both}
+/* 획득패로 쓸려 담기는 팝 */
+@keyframes capPop{
+  0%{opacity:0;transform:translateY(8px) scale(.6)}
+  60%{opacity:1;transform:translateY(-2px) scale(1.12)}
+  100%{transform:none}}
+.mini-caps .card.face,.my-caps .card.face{animation:capPop .28s ease both}
+/* 턴 리빌: 낸 패/뒤집은 패가 짝과 비스듬히 겹쳐 먹거나(가져감) 그대로 깔림 */
+.reveal-wrap{position:fixed;left:0;right:0;top:30%;display:flex;justify-content:center;z-index:55;pointer-events:none;padding:0 10px}
+.reveal-panel{display:flex;align-items:flex-start;gap:12px;background:rgba(8,28,20,.86);
+  border:1.5px solid rgba(255,235,140,.4);border-radius:16px;padding:12px 16px;
+  box-shadow:0 12px 34px rgba(0,0,0,.55);animation:rvIn .22s ease both}
+@keyframes rvIn{from{opacity:0;transform:translateY(10px) scale(.92)}to{opacity:1;transform:none}}
+.rv-slot{display:flex;flex-direction:column;align-items:center;gap:6px}
+.rv-lbl{font-size:11px;color:#ffe45c;font-weight:800;white-space:nowrap}
+.rv-arrow{color:#fff;font-size:22px;font-weight:900;opacity:.85;align-self:center;margin-top:24px}
+.rv-scene{position:relative;width:52px;height:92px}
+.rv-base{position:absolute;left:0;top:13px}
+.rv-top{position:absolute;left:0;top:0}
+.rv-lay{animation:rvLay .34s cubic-bezier(.3,1.3,.5,1) both}
+.rv-match{animation:rvMatch 1.55s ease-in both}
+.rv-base{animation:rvBaseTake 1.55s ease-in both}
+@keyframes rvLay{0%{opacity:0;transform:translateY(-42px) rotate(10deg) scale(1.25)}
+  60%{opacity:1;transform:translateY(3px) rotate(-2deg)}100%{transform:none}}
+@keyframes rvMatch{0%{opacity:0;transform:translateY(-46px) rotate(24deg) scale(1.25)}
+  15%{opacity:1;transform:translate(9px,5px) rotate(15deg) scale(1)}
+  52%{opacity:1;transform:translate(9px,5px) rotate(15deg)}
+  100%{opacity:0;transform:translate(30px,88px) rotate(8deg) scale(.5)}}
+@keyframes rvBaseTake{0%,15%{opacity:1;transform:none}52%{opacity:1;transform:none}
+  100%{opacity:0;transform:translate(26px,86px) scale(.5)}}
+.rv-cap{font-size:11px;font-weight:800;padding:2px 9px;border-radius:8px;animation:rvRes .3s both}
+@keyframes rvRes{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+.rv-cap.ok{color:#0a2b21;background:linear-gradient(160deg,#ffe45c,#e0a82a)}
+.rv-cap.no{color:#fff;background:rgba(255,255,255,.16)}
+/* 바닥에 던지는 강조 */
+@keyframes dropIn{
+  0%{transform:translateY(-40px) rotate(14deg) scale(1.25);opacity:0}
+  60%{transform:translateY(4px) rotate(-3deg) scale(1.05);opacity:1}
+  100%{transform:none}}
+.card.thrown{animation:dropIn .42s cubic-bezier(.2,.9,.3,1) both;z-index:3}
+/* 이벤트 배너 */
+@keyframes bannerPop{
+  0%{transform:scale(.3) rotate(-10deg);opacity:0}
+  55%{transform:scale(1.12) rotate(3deg);opacity:1}
+  70%{transform:scale(.96)}
+  100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes bannerOut{to{opacity:0;transform:scale(1.3) translateY(-20px)}}
+.evt-banner{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.evt-banner .eb-in{font-family:'Gowun Batang',serif;font-weight:800;font-size:64px;
+  padding:8px 30px;border-radius:16px;letter-spacing:4px;
+  animation:bannerPop .5s both, bannerOut .4s 1s both;
+  text-shadow:0 4px 14px rgba(0,0,0,.6)}
+.eb-red{color:#fff;background:linear-gradient(160deg,#e0483d,#a5241b);border:3px solid #ffd7ce}
+.eb-gold{color:#3a2a08;background:linear-gradient(160deg,#ffd95a,#c9992a);border:3px solid #fff4cf}
+.eb-blue{color:#fff;background:linear-gradient(160deg,#3f7bd0,#22447e);border:3px solid #cfe0ff}
+/* 돈 플로터 */
+@keyframes moneyFloat{0%{opacity:0;transform:translateY(6px) scale(.8)}
+  20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+.cap-group{display:flex;align-items:flex-end;gap:1px;margin-right:6px}
+.cap-lbl{font-size:10px;font-weight:900;color:#C9A227;margin-right:2px}
+
+/* ---------- 모달 ---------- */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;
+  z-index:50;padding:18px;backdrop-filter:blur(2px)}
+.modal{background:linear-gradient(170deg,#12463a,#0c332a);border:1px solid rgba(201,162,39,.55);
+  border-radius:18px;padding:24px 22px;width:100%;max-width:400px;max-height:88vh;overflow-y:auto;
+  box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.modal h2{font-size:22px;color:#C9A227;letter-spacing:2px;margin-bottom:12px;text-align:center}
+.modal p{font-size:14.5px;line-height:1.65;color:rgba(243,234,211,.9)}
+.modal .row2{display:flex;gap:10px;margin-top:18px}
+.modal .row2 .btn{flex:1}
+
+/* ---------- 결과 ---------- */
+.result-win{text-align:center;margin-bottom:14px}
+.result-win .who{font-family:'Gowun Batang',serif;font-size:28px;color:#F3EAD3}
+.result-win .amt{font-size:30px;font-weight:900;color:#7ee2a8;margin-top:4px}
+.detail-list{background:rgba(0,0,0,.25);border-radius:12px;padding:12px 14px;margin:10px 0;font-size:13.5px;line-height:1.9}
+.pay-row{display:flex;justify-content:space-between;align-items:center;padding:9px 4px;
+  border-bottom:1px solid rgba(243,234,211,.1);font-size:14.5px}
+.pay-row:last-child{border-bottom:none}
+.pay-row .bak{font-size:11px;color:#ff9a8e;font-weight:700;margin-left:6px}
+.pay-row .m{font-weight:900}
+.cum-table{margin-top:12px;background:rgba(0,0,0,.25);border-radius:12px;padding:10px 14px}
+.cum-table .t{font-size:12px;font-weight:900;color:#C9A227;letter-spacing:2px;margin-bottom:6px}
+
+/* ---------- 카드뉴스 룰 ---------- */
+.cn-wrap{width:100%;max-width:400px}
+.cn-card{background:linear-gradient(165deg,#faf4e4,#EDE2C6);color:#241F1A;border-radius:18px;
+  padding:26px 24px;min-height:420px;display:flex;flex-direction:column;
+  box-shadow:0 10px 34px rgba(0,0,0,.55);border:1.5px solid #c9b98f;position:relative;overflow:hidden}
+.cn-card::before{content:attr(data-num);position:absolute;top:14px;right:18px;
+  font-family:'Gowun Batang',serif;font-size:15px;font-weight:700;color:#B5382F;opacity:.85}
+.cn-card .cn-icon{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%, #d05445, #9c2c24 70%);color:#fff;
+  font-family:'Gowun Batang',serif;font-size:26px;font-weight:700;margin-bottom:14px;
+  box-shadow:0 4px 10px rgba(0,0,0,.25)}
+.cn-card h3{font-size:23px;letter-spacing:1px;margin-bottom:12px;color:#241F1A}
+.cn-card .cn-body{font-size:14.5px;line-height:1.8;color:#3c3428;flex:1}
+.cn-card .cn-body b{color:#B5382F}
+.cn-card .cn-body ul{padding-left:18px;margin:6px 0}
+.cn-card .cn-body li{margin:3px 0}
+.cn-nav{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.cn-dots{display:flex;gap:6px}
+.cn-dot{width:8px;height:8px;border-radius:50%;background:rgba(243,234,211,.3)}
+.cn-dot.on{background:#C9A227}
+.cn-arrow{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.35);color:#F3EAD3;
+  font-size:20px;border:1px solid rgba(243,234,211,.3)}
+.cn-arrow:disabled{opacity:.25}
+
+@media (max-width:390px){
+  .card{width:50px;height:76px}
+  .seat{min-width:88px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- CDN 라이브러리 -->
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+/* ================================================================
+   ★ Firebase 설정 — 본인 프로젝트 값으로 교체하세요 (홀덤 앱과 동일 방식)
+   Firebase 콘솔 > 프로젝트 설정 > 웹 앱 > SDK 구성에서 복사
+================================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDa43lnj7QUbG-bSFpl-ypC3Cmkd1YNs_I",
+  authDomain: "gostop-59b09.firebaseapp.com",
+  // ⚠️ databaseURL: Realtime Database 콘솔 상단에 보이는 실제 URL로 맞추세요.
+  //   싱가포르(asia-southeast1)로 만들었으면 아래 그대로 OK,
+  //   미국(us-central1, 기본값)이면 "https://gostop-59b09-default-rtdb.firebaseio.com" 로 바꾸세요.
+  databaseURL: "https://gostop-59b09-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gostop-59b09",
+  storageBucket: "gostop-59b09.firebasestorage.app",
+  messagingSenderId: "403838851544",
+  appId: "1:403838851544:web:17e9f41c81e39e38ff3aad"
+};
+firebase.initializeApp(firebaseConfig);
+
+/* PWA: 단일 파일 배포를 위해 manifest를 동적 생성 (설치 배너용) */
+(function(){
+  const manifest={name:"고스톱",short_name:"고스톱",display:"standalone",
+    start_url:".",background_color:"#0a2b21",theme_color:"#0a2b21",
+    icons:[{src:"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect width="192" height="192" rx="36" fill="#0a2b21"/><circle cx="96" cy="96" r="62" fill="#9c2c24"/><text x="96" y="118" font-size="64" text-anchor="middle" fill="#fff" font-family="serif">花</text></svg>'),sizes:"192x192",type:"image/svg+xml"}]};
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const link=document.createElement('link');link.rel='manifest';link.href=URL.createObjectURL(blob);
+  document.head.appendChild(link);
+})();
+
+/* localStorage 안전 래퍼: GitHub Pages에서는 정상 동작, 미지원 환경은 메모리 폴백 */
+const storage=(()=>{const mem={};return{
+  get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]||null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}},
+};})();
+
+/*CORE-START*/
+/* ================================================================
+   순수 함수 코어: 덱 / 점수 / 배수 / 돈 정산
+   (UI와 분리되어 있어 단독 테스트 가능)
+================================================================ */
+const MONTH_NAMES=['송학','매조','벚꽃','흑싸리','난초','모란','홍싸리','공산','국화','단풍','오동','비'];
+
+/* 화투 48장 생성. kind: 광/열/단/피, dan: 홍/청/초/무, ssang: 쌍피, godori: 고도리 새, bi: 비광, gukjin: 국진(9월 열끗 — 본 구현은 열끗 고정) */
+function buildDeck(){
+  const D=[];let id=0;
+  const add=(month,kind,extra)=>{D.push(Object.assign({id:id++,month,kind},extra||{}))};
+  for(let m=1;m<=12;m++){
+    if(m===1){add(m,'광');add(m,'단',{dan:'홍'});add(m,'피');add(m,'피');}
+    else if(m===2){add(m,'열',{godori:true});add(m,'단',{dan:'홍'});add(m,'피');add(m,'피');}
+    else if(m===3){add(m,'광');add(m,'단',{dan:'홍'});add(m,'피');add(m,'피');}
+    else if(m===4){add(m,'열',{godori:true});add(m,'단',{dan:'초'});add(m,'피');add(m,'피');}
+    else if(m===5){add(m,'열');add(m,'단',{dan:'초'});add(m,'피');add(m,'피');}
+    else if(m===6){add(m,'열');add(m,'단',{dan:'청'});add(m,'피');add(m,'피');}
+    else if(m===7){add(m,'열');add(m,'단',{dan:'초'});add(m,'피');add(m,'피');}
+    else if(m===8){add(m,'광');add(m,'열',{godori:true});add(m,'피');add(m,'피');}
+    else if(m===9){add(m,'열',{gukjin:true});add(m,'단',{dan:'청'});add(m,'피');add(m,'피');}
+    else if(m===10){add(m,'열');add(m,'단',{dan:'청'});add(m,'피');add(m,'피');}
+    else if(m===11){add(m,'광');add(m,'피',{ssang:true});add(m,'피');add(m,'피');}
+    else {add(m,'광',{bi:true});add(m,'열');add(m,'단',{dan:'무'});add(m,'피',{ssang:true});}
+  }
+  return D;
+}
+const DECK=buildDeck();
+const cardOf=id=>DECK[id];
+
+function shuffle(arr,rnd){const a=arr.slice();const r=rnd||Math.random;
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* 획득패 기본 점수 계산 (고/흔들기/폭탄 배수 미적용) */
+function baseScore(cardIds){
+  const cs=cardIds.map(cardOf);
+  const g=cs.filter(c=>c.kind==='광');
+  const y=cs.filter(c=>c.kind==='열');
+  const t=cs.filter(c=>c.kind==='단');
+  const piCnt=cs.filter(c=>c.kind==='피').reduce((s,c)=>s+(c.ssang?2:1),0);
+  let s=0;const detail=[];
+  const hasBi=g.some(c=>c.bi);
+  if(g.length===5){s+=15;detail.push('오광 +15');}
+  else if(g.length===4){s+=4;detail.push('사광 +4');}
+  else if(g.length===3){const p=hasBi?2:3;s+=p;detail.push((hasBi?'비삼광':'삼광')+' +'+p);}
+  const gwangScore=s;
+  if(y.filter(c=>c.godori).length===3){s+=5;detail.push('고도리 +5');}
+  if(y.length>=5){s+=y.length-4;detail.push('열끗 '+y.length+'장 +'+(y.length-4));}
+  ['홍','청','초'].forEach(d=>{
+    if(t.filter(c=>c.dan===d).length===3){s+=3;detail.push(d+'단 +3');}
+  });
+  if(t.length>=5){s+=t.length-4;detail.push('띠 '+t.length+'장 +'+(t.length-4));}
+  let hasPiScore=false;
+  if(piCnt>=10){s+=piCnt-9;hasPiScore=true;detail.push('피 '+piCnt+'장 +'+(piCnt-9));}
+  return {score:s,detail,gwangCnt:g.length,yeolCnt:y.length,ttiCnt:t.length,piCnt,
+    hasGwangScore:gwangScore>0,hasPiScore};
+}
+
+/* 최종 점수: 1고 +1, 2고 +2, 3고부터 매 고 ×2 / 흔들기·폭탄 각 ×2 */
+function finalScore(base,goCnt,shakeCnt,bombCnt){
+  let s=base+Math.min(goCnt||0,2);
+  s*=Math.pow(2,Math.max(0,(goCnt||0)-2));
+  s*=Math.pow(2,(shakeCnt||0)+(bombCnt||0));
+  return s;
+}
+
+/* 돈 정산: 패자별 박 배수 개별 판정 + 고박 전액 전가. 합계 0 보장.
+   피박: 승자가 피점수 有 & 패자 피 1~7장 (0장은 면제 룰 적용)
+   광박: 승자가 광점수 有 & 패자 광 0장
+   멍박: 승자 열끗 7장 이상
+   고박: 고를 부른 패자가 모든 패자 몫 전액 부담 */
+function settle(opts){
+  const {final,winnerFlags,losers,perPoint}=opts;
+  const pay={},notes={};
+  let gobakPid=null;
+  losers.forEach(L=>{
+    let m=1;const ns=[];
+    if(winnerFlags.hasPiScore && L.piCnt>=1 && L.piCnt<=7){m*=2;ns.push('피박');}
+    if(winnerFlags.hasGwangScore && L.gwangCnt===0){m*=2;ns.push('광박');}
+    if(winnerFlags.yeolCnt>=7){m*=2;ns.push('멍박');}
+    if((L.goCount||0)>0) gobakPid=L.pid;
+    pay[L.pid]=final*perPoint*m;
+    notes[L.pid]=ns;
+  });
+  if(gobakPid!==null){
+    const total=Object.values(pay).reduce((a,b)=>a+b,0);
+    Object.keys(pay).forEach(p=>{pay[p]=(p===gobakPid)?total:0;});
+    notes[gobakPid]=(notes[gobakPid]||[]).concat('고박');
+  }
+  const winTotal=Object.values(pay).reduce((a,b)=>a+b,0);
+  return {pay,notes,winTotal};
+}
+
+/* 획득 선택 시 가치 판단(자동 선택용): 쌍피 > 광 > 열 > 단 > 피 */
+function cardValue(c){
+  if(c.kind==='피'&&c.ssang)return 5;
+  if(c.kind==='광')return 4;
+  if(c.kind==='열')return 3;
+  if(c.kind==='단')return 2;
+  return 1;
+}
+function pickBest(ids){return ids.slice().sort((a,b)=>cardValue(cardOf(b))-cardValue(cardOf(a)))[0];}
+/*CORE-END*/
+</script>
+<script>
+/*ENGINE-START*/
+/* ================================================================
+   게임 엔진: 상태 머신 (딜링 → 광팔기 → 턴 → 고/스톱 → 정산)
+   game 객체를 직접 변형하는 순수 JS — UI/Firebase와 분리
+================================================================ */
+
+/* 새 판 생성. players: [{pid,name}] 좌석 순서, dealerIdx: 선 인덱스 */
+function newGame(playerList,dealerIdx,perPoint,round){
+  const n=playerList.length;
+  const order=playerList.map(p=>p.pid);
+  let activePids,restingPids=[],dealerPid=order[dealerIdx%n];
+  let handSize=7,floorSize=6;
+  if(n===2){ /* 맞고: 둘 다 플레이, 10장씩 + 바닥 8장 */
+    activePids=[order[dealerIdx%2],order[(dealerIdx+1)%2]];
+    handSize=10;floorSize=8;
+  }
+  else if(n===3){ activePids=[order[dealerIdx%n],order[(dealerIdx+1)%n],order[(dealerIdx+2)%n]]; }
+  else{
+    /* 4인 이상: 선은 쉬고(완전 관전) 선 다음 3명이 플레이. 나머지도 대기 */
+    activePids=[];
+    for(let i=1;i<=n-1 && activePids.length<3;i++) activePids.push(order[(dealerIdx+i)%n]);
+    restingPids=order.filter(p=>!activePids.includes(p));
+  }
+  const deck=shuffle(DECK.map(c=>c.id));
+  const hands={},captured={};
+  activePids.forEach(p=>{hands[p]=deck.splice(0,handSize);captured[p]=[];});
+  const floor=deck.splice(0,floorSize);
+  const g={status:'gwangpal',round:round||1,perPoint,dealerPid,mode:(n===2?'matgo':'gostop'),
+    activePids,restingPids,deadPid:null,
+    deck,floor,hands,captured,
+    turnPid:activePids[0],
+    goCount:{},goBaseline:{},shake:{},bomb:{},bombTokens:{},shakenMonths:{},
+    ppeok:{pid:null,streak:0},turnPlayed:{},
+    transfers:[],
+    gwangpalEligible:(n===2?[]:activePids.filter(p=>hands[p].every(id=>cardOf(id).kind!=='광'))),
+    gwangpalDecisions:{},
+    pending:null,result:null,minStop:3,lastEvents:[]};
+  if(g.gwangpalEligible.length===0) resolveGwangpal(g);
+  return g;
+}
+
+/* 광팔기 결정 완료 시 호출: 최초 1명만 죽기 허용(판 성립 위해), 각 잔류자가 점당×1씩 지급 */
+function resolveGwangpal(g){
+  const seller=g.gwangpalEligible.find(p=>g.gwangpalDecisions[p]==='sell');
+  if(seller){
+    g.deadPid=seller;
+    g.activePids=g.activePids.filter(p=>p!==seller);
+    g.activePids.forEach(p=>g.transfers.push({from:p,to:seller,amount:g.perPoint,reason:'광팔기'}));
+    delete g.hands[seller]; /* 죽은 패는 미사용 처리 */
+  }
+  g.minStop=g.activePids.length===2?7:3; /* 2인 잔류 시 맞고 기준 7점 */
+  if(g.turnPid===g.deadPid||!g.activePids.includes(g.turnPid)) g.turnPid=g.activePids[0];
+  g.status='turn';
+}
+
+function aliveOpponents(g,pid){return g.activePids.filter(p=>p!==pid);}
+
+/* 상대 피 1장 뺏기: 일반피 우선, 없으면 쌍피 */
+function stealPi(g,fromPid,toPid){
+  const cap=g.captured[fromPid]||[];
+  let idx=cap.findIndex(id=>{const c=cardOf(id);return c.kind==='피'&&!c.ssang;});
+  if(idx<0) idx=cap.findIndex(id=>cardOf(id).kind==='피');
+  if(idx<0) return null;
+  const [taken]=cap.splice(idx,1);
+  g.captured[toPid].push(taken);
+  return taken;
+}
+
+/* 한 턴 실행. action: {type:'play'|'bomb'|'pass', cardId?, shake?:bool} */
+function executeTurn(g,pid,action){
+  const ev=[];
+  g.lastFlipped=null;
+  let staged=[];      /* 이번 턴 획득 */
+  let stealCnt=0;
+  let playedId=null,playedAlone=false,pairedFloorId=null,ttadakOther=null;
+  const hand=g.hands[pid]||[];
+
+  if(action.type==='pass'){
+    /* 폭탄 토큰 소모: 손패 없이 더미만 뒤집기 */
+    g.bombTokens[pid]=(g.bombTokens[pid]||0)-1;
+  }
+  else if(action.type==='bomb'){
+    const m=cardOf(action.cardId).month;
+    const three=hand.filter(id=>cardOf(id).month===m);
+    const fl=g.floor.filter(id=>cardOf(id).month===m);
+    staged.push.apply(staged,three.concat(fl));
+    g.hands[pid]=hand.filter(id=>cardOf(id).month!==m);
+    g.floor=g.floor.filter(id=>cardOf(id).month!==m);
+    g.bomb[pid]=(g.bomb[pid]||0)+1;
+    g.bombTokens[pid]=(g.bombTokens[pid]||0)+2;
+    stealCnt++;ev.push('폭탄!');
+  }
+  else{
+    playedId=action.cardId;
+    const c=cardOf(playedId);
+    if(action.shake && !(g.shakenMonths[pid]||[]).includes(c.month)){
+      g.shake[pid]=(g.shake[pid]||0)+1;
+      g.shakenMonths[pid]=(g.shakenMonths[pid]||[]).concat(c.month);
+      ev.push('흔들기!');
+    }
+    g.hands[pid]=hand.filter(id=>id!==playedId);
+    const matches=g.floor.filter(id=>cardOf(id).month===c.month);
+    if(matches.length===0){g.floor.push(playedId);playedAlone=true;}
+    else if(matches.length===3){
+      /* 뻑더미 잡기: 4장 모두 + 피 스틸 */
+      staged.push.apply(staged,[playedId].concat(matches));
+      g.floor=g.floor.filter(id=>!matches.includes(id));
+      stealCnt++;ev.push('뻑 잡았다!');
+    }
+    else if(matches.length===1){pairedFloorId=matches[0];}
+    else{ /* 2장 매칭: 가치 높은 쪽 자동 선택, 따닥 후보 */
+      pairedFloorId=pickBest(matches);
+      ttadakOther=matches.find(x=>x!==pairedFloorId);
+    }
+  }
+
+  /* 더미 뒤집기 */
+  if(g.deck.length>0){
+    const flippedId=g.deck.pop();
+    const f=cardOf(flippedId);
+    g.lastFlipped=flippedId;
+    if(playedAlone && f.month===cardOf(playedId).month){
+      /* 쪽: 낸 패와 뒤집은 패가 같은 월 → 둘 다 획득 + 피 스틸 */
+      staged.push(playedId,flippedId);
+      g.floor=g.floor.filter(id=>id!==playedId);
+      stealCnt++;ev.push('쪽!');
+    }
+    else if(pairedFloorId!==null && f.month===cardOf(playedId).month){
+      if(ttadakOther!==null){
+        /* 따닥: 바닥 2장 + 낸 패 + 뒤집은 패 = 같은 월 4장 획득 + 피 스틸 */
+        staged.push(playedId,pairedFloorId,ttadakOther,flippedId);
+        g.floor=g.floor.filter(id=>id!==pairedFloorId&&id!==ttadakOther);
+        stealCnt++;ev.push('따닥!');
+      }else{
+        /* 뻑(쌌다): 낸 패로 먹으려던 것을 뒤집은 패가 같은 월로 막음 → 3장 바닥에 */
+        g.floor.push(playedId,flippedId);
+        ev.push('뻑!');
+        if(g.ppeok.pid===pid) g.ppeok.streak++;
+        else {g.ppeok={pid,streak:1};}
+        if((g.turnPlayed[pid]||0)===0){
+          /* 첫뻑: 상대들에게서 즉시 점당×5씩 (판 종료 시 정산 반영) */
+          aliveOpponents(g,pid).forEach(op=>g.transfers.push({from:op,to:pid,amount:g.perPoint*5,reason:'첫뻑'}));
+          ev.push('첫뻑! (+5점씩)');
+        }
+        if(g.ppeok.streak>=3){
+          ev.push('3연뻑! 즉시 승리');
+          g.instantWin={pid,reason:'3연뻑'};
+        }
+      }
+    }
+    else{
+      /* 낸 패의 보류 매칭 확정 */
+      if(pairedFloorId!==null){
+        staged.push(playedId,pairedFloorId);
+        g.floor=g.floor.filter(id=>id!==pairedFloorId);
+      }
+      /* 뒤집은 패 매칭 */
+      const fm=g.floor.filter(id=>cardOf(id).month===f.month);
+      if(fm.length===0){g.floor.push(flippedId);}
+      else if(fm.length===3){
+        staged.push.apply(staged,[flippedId].concat(fm));
+        g.floor=g.floor.filter(id=>!fm.includes(id));
+        stealCnt++;ev.push('뻑 잡았다!');
+      }
+      else if(fm.length===1){staged.push(flippedId,fm[0]);g.floor=g.floor.filter(id=>id!==fm[0]);}
+      else{const b=pickBest(fm);staged.push(flippedId,b);g.floor=g.floor.filter(id=>id!==b);}
+    }
+  }
+  else if(pairedFloorId!==null){
+    staged.push(playedId,pairedFloorId);
+    g.floor=g.floor.filter(id=>id!==pairedFloorId);
+  }
+
+  if(ev.every(e=>e!=='뻑!') && staged.length>0 && g.ppeok.pid===pid){
+    /* 뻑이 아닌 정상 획득이면 본인 연뻑 스트릭 리셋 */
+    g.ppeok={pid:null,streak:0};
+  }
+  g.captured[pid]=(g.captured[pid]||[]).concat(staged);
+  for(let i=0;i<stealCnt;i++){
+    aliveOpponents(g,pid).forEach(op=>{const t=stealPi(g,op,pid);if(t)ev.push((cardOf(t).ssang?'쌍피':'피')+' 뺏음');});
+  }
+  g.turnPlayed[pid]=(g.turnPlayed[pid]||0)+1;
+  g.lastEvents=ev;
+  /* 애니메이션/사운드 힌트 */
+  g.anim={played:playedId,flipped:(typeof g.lastFlipped!=='undefined'?g.lastFlipped:null),
+    captured:staged.slice(),floorNow:g.floor.slice(),seq:(g.seq||0)};
+  return ev;
+}
+
+/* 턴 종료 후 처리: 즉시승/고스톱 판정/턴 넘김/나가리 */
+function afterTurn(g,pid){
+  if(g.instantWin){finishRound(g,g.instantWin.pid,5);return;}
+  const bs=baseScore(g.captured[pid]||[]);
+  const baseline=g.goBaseline[pid]||0;
+  if(bs.score>=g.minStop && bs.score>baseline){
+    g.status='gostop';g.pending={type:'gostop',pid};return;
+  }
+  advanceTurn(g);
+}
+
+function canAct(g,pid){return ((g.hands[pid]||[]).length>0)||((g.bombTokens[pid]||0)>0);}
+
+/* 고를 부를 수 있는가: 본인 또는 상대에게 남은 진행이 있어야 함 */
+function canGo(g,pid){
+  if(g.deck.length===0) return false;
+  return g.activePids.some(p=>canAct(g,p));
+}
+
+function advanceTurn(g){
+  const arr=g.activePids;
+  let idx=arr.indexOf(g.turnPid);
+  for(let i=1;i<=arr.length;i++){
+    const nx=arr[(idx+i)%arr.length];
+    if(canAct(g,nx)){g.turnPid=nx;return;}
+  }
+  /* 아무도 낼 패가 없음 → 나가리 */
+  finishNagari(g);
+}
+
+function chooseGoStop(g,pid,choice){
+  g.pending=null;
+  if(choice==='stop'){finishRound(g,pid);return;}
+  g.goCount[pid]=(g.goCount[pid]||0)+1;
+  g.goBaseline[pid]=baseScore(g.captured[pid]||[]).score;
+  g.status='turn';
+  advanceTurn(g);
+}
+
+function finishNagari(g){
+  g.status='result';
+  g.result={nagari:true,transfers:g.transfers};
+}
+
+/* 판 종료 정산. overrideBase: 3연뻑 즉시승 기본점 */
+function finishRound(g,winnerPid,overrideBase){
+  const bs=baseScore(g.captured[winnerPid]||[]);
+  const base=overrideBase!=null?Math.max(overrideBase,bs.score):bs.score;
+  const final=finalScore(base,g.goCount[winnerPid]||0,g.shake[winnerPid]||0,g.bomb[winnerPid]||0);
+  const losers=g.activePids.filter(p=>p!==winnerPid).map(p=>{
+    const lb=baseScore(g.captured[p]||[]);
+    return {pid:p,piCnt:lb.piCnt,gwangCnt:lb.gwangCnt,goCount:g.goCount[p]||0};
+  });
+  const st=settle({final,perPoint:g.perPoint,losers,
+    winnerFlags:{hasPiScore:bs.hasPiScore,hasGwangScore:bs.hasGwangScore,yeolCnt:bs.yeolCnt}});
+  g.status='result';
+  g.result={nagari:false,winner:winnerPid,base,final,detail:bs.detail,
+    goCount:g.goCount[winnerPid]||0,shake:g.shake[winnerPid]||0,bomb:g.bomb[winnerPid]||0,
+    pay:st.pay,notes:st.notes,winTotal:st.winTotal,transfers:g.transfers,
+    reason:overrideBase!=null?'3연뻑':null};
+}
+
+/* 결과를 누적 손익 델타로 변환 (합계 0) */
+function resultToDeltas(result){
+  const d={};
+  const add=(pid,v)=>{d[pid]=(d[pid]||0)+v;};
+  if(!result.nagari){
+    Object.entries(result.pay).forEach(([pid,amt])=>{add(pid,-amt);add(result.winner,amt);});
+  }
+  (result.transfers||[]).forEach(t=>{add(t.from,-t.amount);add(t.to,t.amount);});
+  return d;
+}
+/*ENGINE-END*/
+</script>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo,useCallback}=React;
+const db=firebase.database();
+
+/* ---------- 유틸 ---------- */
+const AV_COLORS=['#B5382F','#2E5FA3','#3d7a3d','#C9A227','#7a4a9e','#b56a2f'];
+const won=n=>Math.abs(n).toLocaleString('ko-KR')+'원';
+const signedWon=n=>n>0?'+'+won(n):n<0?'−'+won(n):'0원';
+const cumClass=n=>n>0?'pos':n<0?'neg':'zero';
+function myPid(){
+  let p=storage.get('gs_pid');
+  if(!p){p='p'+Math.random().toString(36).slice(2,10);storage.set('gs_pid',p);}
+  return p;
+}
+/* 간단 효과음 (Web Audio) */
+let AC=null;
+function beep(freq,dur,type){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    const o=AC.createOscillator(),gn=AC.createGain();
+    o.type=type||'sine';o.frequency.value=freq;
+    gn.gain.setValueAtTime(.12,AC.currentTime);
+    gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+(dur||.15));
+    o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+(dur||.15));
+  }catch(e){}
+}
+const sndPlay=()=>beep(520,.1,'triangle');
+const sndCapture=()=>{beep(660,.09,'triangle');setTimeout(()=>beep(880,.12,'triangle'),70);};
+const sndEvent=()=>{beep(392,.12,'square');setTimeout(()=>beep(523,.15,'square'),90);};
+const sndTurn=()=>beep(784,.18,'sine');
+/* 진짜 화투 손맛: 노이즈+저역 툭 */
+function noiseHit(dur,ftype,freq,q,peak){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    const n=Math.max(1,Math.floor(AC.sampleRate*dur));
+    const buf=AC.createBuffer(1,n,AC.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.2);
+    const src=AC.createBufferSource();src.buffer=buf;
+    const f=AC.createBiquadFilter();f.type=ftype||'bandpass';f.frequency.value=freq||2200;f.Q.value=q||1;
+    const g=AC.createGain();g.gain.value=peak||.5;
+    src.connect(f);f.connect(g);g.connect(AC.destination);src.start();
+  }catch(e){}
+}
+function thump(freq,dur,peak){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain();o.type='sine';
+    o.frequency.setValueAtTime(freq,AC.currentTime);
+    o.frequency.exponentialRampToValueAtTime(freq*0.5,AC.currentTime+dur);
+    g.gain.setValueAtTime(peak||.3,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+dur);
+    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+dur);
+  }catch(e){}
+}
+const sndSlap=()=>{noiseHit(.03,'bandpass',3000,.9,.6);noiseHit(.018,'highpass',5200,.7,.4);thump(130,.05,.3);}; // 착!
+const sndFlip=()=>{noiseHit(.08,'bandpass',2100,.6,.4);};                                                     // 삭
+const sndCollect=()=>{noiseHit(.028,'bandpass',3200,1,.55);thump(210,.05,.25);
+  setTimeout(()=>noiseHit(.028,'bandpass',3700,1,.55),85);};                                                  // 착착
+
+/* ---------- 화투장 컴포넌트 ---------- */
+function symOf(c){
+  if(c.kind==='광')return c.bi?'雨':'光';
+  if(c.kind==='열')return c.godori?'鳥':'十';
+  if(c.kind==='단')return c.dan==='무'?'띠':c.dan+'단';
+  return c.ssang?'雙':'皮';
+}
+function nameOf(c){
+  if(c.kind==='광')return c.bi?'비광':'광';
+  if(c.kind==='열')return c.gukjin?'국진':c.godori?'고도리':'열끗';
+  if(c.kind==='단')return c.dan==='무'?'띠':'';
+  return c.ssang?'쌍피':'피';
+}
+/* 실사풍 플랫 벡터 화투 얼굴 생성기. viewBox 100x150. 카드 c: {month,kind,dan,ssang,bi,godori,gukjin,id} */
+const C={red:'#d5342a',dred:'#a51f18',blk:'#151515',gold:'#e8b93a',dgold:'#c99320',
+  blue:'#2a55c8',grn:'#2f8a3f',wht:'#ffffff',cream:'#fbf7ec',brown:'#6b4423',pink:'#e86f8a'};
+
+/* ---- 공통 조각 ---- */
+function gwangSeal(x,y){return `<circle cx="${x}" cy="${y}" r="12.5" fill="${C.red}" stroke="#fff" stroke-width="1.5"/><text x="${x}" y="${y+5}" font-size="13" text-anchor="middle" fill="#fff" font-weight="900" font-family="'Gowun Batang',serif">광</text>`;}
+function ribbon(kind){ // 홍/청/초/무
+  if(kind==='무'){ // 비단: 빨간 곡선 리본
+    return `<path d="M52 15 C 34 34, 34 62, 47 80 C 57 94, 57 100, 51 110 C 70 97, 70 64, 57 43 C 51 31, 52 22, 52 15 Z" fill="${C.red}" stroke="${C.dred}" stroke-width="1.4"/>`;
+  }
+  const col = (kind==='청')?C.blue:C.red;
+  let t='';
+  if(kind==='홍'){t=`<text x="50" y="46" font-size="15" text-anchor="middle" fill="#fff" font-weight="900" font-family="'Gowun Batang',serif">홍</text><text x="50" y="65" font-size="15" text-anchor="middle" fill="#fff" font-weight="900" font-family="'Gowun Batang',serif">단</text>`;}
+  if(kind==='청'){t=`<text x="50" y="46" font-size="15" text-anchor="middle" fill="#fff" font-weight="900" font-family="'Gowun Batang',serif">청</text><text x="50" y="65" font-size="15" text-anchor="middle" fill="#fff" font-weight="900" font-family="'Gowun Batang',serif">단</text>`;}
+  return `<g transform="rotate(-7 50 60)"><rect x="39" y="16" width="22" height="86" rx="5" fill="${col}" stroke="${C.dred}" stroke-width="1"/>${t}</g>`;
+}
+/* 식물 조각 */
+function pine(){ // 검은 소나무 잔가지(1월)
+  let s='';
+  [[16,150],[50,150],[84,150]].forEach(([x,y])=>{
+    s+=`<path d="M${x} ${y} L${x-14} ${y-38} M${x} ${y} L${x+14} ${y-38} M${x} ${y-8} L${x-20} ${y-30} M${x} ${y-8} L${x+20} ${y-30} M${x} ${y-2} L${x} ${y-46}" stroke="${C.blk}" stroke-width="4.5" stroke-linecap="round"/>`;
+    for(let i=0;i<7;i++){const a=-2.6+i*0.72;s+=`<line x1="${x}" y1="${y-20}" x2="${x+Math.cos(a)*22}" y2="${y-20+Math.sin(a)*22}" stroke="${C.blk}" stroke-width="2"/>`;}
+  });
+  return s;
+}
+function plumBranch(withBird){ // 매화(2월) — 동글동글한 둥근 꽃
+  let s=`<path d="M18 150 Q30 100 46 74 Q60 52 84 34" stroke="${C.blk}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  const bl=[[46,74],[62,52],[80,36],[34,104],[54,88]];
+  bl.forEach(([x,y])=>{s+=plumFlower(x,y);});
+  return s;
+}
+function plumFlower(x,y){ // 둥근 꽃잎 5개가 겹친 동그란 매화
+  let s='';for(let i=0;i<5;i++){const a=i/5*6.283-1.57;s+=`<circle cx="${(x+Math.cos(a)*5.4).toFixed(1)}" cy="${(y+Math.sin(a)*5.4).toFixed(1)}" r="5.9" fill="${C.red}" stroke="${C.blk}" stroke-width="1"/>`;}
+  s+=`<circle cx="${x}" cy="${y}" r="3.4" fill="${C.gold}"/>`;return s;
+}
+function blossom(x,y,r,col){let s='';for(let i=0;i<5;i++){const a=i/5*6.283-1.57;s+=`<circle cx="${x+Math.cos(a)*r}" cy="${y+Math.sin(a)*r}" r="${r*0.6}" fill="${col}" stroke="${C.blk}" stroke-width="1"/>`;}s+=`<circle cx="${x}" cy="${y}" r="${r*0.5}" fill="${C.gold}"/>`;return s;}
+function cherryBlossom(x,y,r){
+  let s='';
+  for(let i=0;i<5;i++){const a=i/5*6.283-1.5708;s+=`<circle cx="${(x+Math.cos(a)*r*0.72).toFixed(1)}" cy="${(y+Math.sin(a)*r*0.72).toFixed(1)}" r="${(r*0.62).toFixed(1)}" fill="${C.pink}" stroke="${C.red}" stroke-width="1"/>`;}
+  s+=`<circle cx="${x}" cy="${y}" r="${(r*0.3).toFixed(1)}" fill="${C.red}"/>`;
+  for(let i=0;i<9;i++){const a=i/9*6.283;s+=`<line x1="${x}" y1="${y}" x2="${(x+Math.cos(a)*r*0.55).toFixed(1)}" y2="${(y+Math.sin(a)*r*0.55).toFixed(1)}" stroke="${C.red}" stroke-width="0.8"/>`;}
+  return s;
+}
+function cherry(){ // 벚꽃(3월) — 검은 가지 + 분홍 벚꽃 + 붉은 봉오리
+  let s=`<path d="M12 150 Q30 112 46 82 Q56 62 76 46 M72 150 Q64 118 60 96 M46 82 Q60 74 74 78" stroke="${C.blk}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  [[34,124],[80,92],[30,66],[64,110]].forEach(([x,y])=>{s+=`<ellipse cx="${x}" cy="${y}" rx="3" ry="5" fill="${C.red}" transform="rotate(20 ${x} ${y})"/>`;});
+  [[46,80],[68,56],[26,98],[82,108],[52,120],[38,46]].forEach(([x,y])=>{s+=cherryBlossom(x,y,9);});
+  return s;
+}
+function clover(col){ // 싸리(4흑/7홍)
+  let s='';
+  [[26,150],[50,150],[74,150]].forEach(([x,y])=>{
+    s+=`<path d="M${x} ${y} Q${x-4} ${y-40} ${x-14} ${y-60}" stroke="${col}" stroke-width="3" fill="none"/>`;
+    for(let i=0;i<5;i++){const yy=y-16-i*10;s+=`<ellipse cx="${x-i*2.4-4}" cy="${yy}" rx="5" ry="3" fill="${col}"/><ellipse cx="${x-i*2.4+4}" cy="${yy}" rx="5" ry="3" fill="${col}"/>`;}
+  });
+  return s;
+}
+function grassHill(){ // 억새 언덕(8월) 검은 언덕
+  return `<path d="M0 150 Q50 96 100 150 Z" fill="${C.blk}"/>`+
+    Array.from({length:9},(_,i)=>{const x=12+i*9;return `<path d="M${x} 150 Q${x-3} 120 ${x-8} 104" stroke="${C.blk}" stroke-width="2" fill="none"/>`;}).join('');
+}
+function iris(){ // 난초/붓꽃(5월)
+  let s='';
+  for(let i=0;i<5;i++){const x=24+i*13;s+=`<path d="M${x} 150 Q${x+3} 110 ${x-4} 78" stroke="${C.blk}" stroke-width="4" fill="none" stroke-linecap="round"/>`;}
+  [[34,78],[58,72],[74,84]].forEach(([x,y])=>{s+=`<path d="M${x} ${y} q-9 -10 -3 -20 q3 12 3 12 q0 0 3 -12 q6 10 -3 20Z" fill="${C.blue}" stroke="${C.blk}" stroke-width="1"/>`;});
+  return s;
+}
+function peony(){ // 모란(6월)
+  let s=`<path d="M20 150 Q30 110 40 96 M70 150 Q64 112 60 98" stroke="${C.grn}" stroke-width="5" fill="none"/>`;
+  s+=`<g stroke="${C.blk}" stroke-width="1.4">`;
+  for(let i=0;i<8;i++){const a=i/8*6.283;s+=`<ellipse cx="${50+Math.cos(a)*14}" cy="${72+Math.sin(a)*14}" rx="9" ry="7" fill="${C.red}" transform="rotate(${a*57} ${50+Math.cos(a)*14} ${72+Math.sin(a)*14})"/>`;}
+  s+=`<circle cx="50" cy="72" r="9" fill="${C.dred}"/></g>`;
+  return s;
+}
+function blueStar(x,y,r){let p='';for(let i=0;i<5;i++){const a=-1.5708+i*1.25664,a2=a+0.62832;p+=`${i?'L':'M'}${(x+Math.cos(a)*r).toFixed(1)} ${(y+Math.sin(a)*r).toFixed(1)} L${(x+Math.cos(a2)*r*0.44).toFixed(1)} ${(y+Math.sin(a2)*r*0.44).toFixed(1)} `;}return `<path d="${p}Z" fill="${C.blue}" stroke="#16357f" stroke-width="1"/>`;}
+function berrySprig(x,y,dir){dir=dir||1;let s=`<path d="M${x} ${y} q${6*dir} 9 ${4*dir} 20 q${-2*dir} 7 ${2*dir} 13" stroke="${C.blk}" stroke-width="1.6" fill="none"/>`;
+  [[-5,-3],[5,-1],[0,3],[7,7],[-3,9],[4,15],[-2,20],[6,20]].forEach(([a,b])=>{s+=`<circle cx="${x+a*dir}" cy="${y+b}" r="3" fill="${C.blk}"/>`;});return s;}
+function chrysFlower(x,y,R){let s=`<g stroke="${C.dred}" stroke-width="0.7">`;
+  for(let i=0;i<16;i++){const a=i/16*6.283;const cx=(x+Math.cos(a)*R).toFixed(1),cy=(y+Math.sin(a)*R).toFixed(1);s+=`<ellipse cx="${cx}" cy="${cy}" rx="6.4" ry="3.7" fill="${C.red}" transform="rotate(${(a*57.3).toFixed(0)} ${cx} ${cy})"/>`;}
+  for(let i=0;i<13;i++){const a=i/13*6.283+0.24;const cx=(x+Math.cos(a)*R*0.74).toFixed(1),cy=(y+Math.sin(a)*R*0.74).toFixed(1);s+=`<ellipse cx="${cx}" cy="${cy}" rx="5.6" ry="3.4" fill="${C.red}" transform="rotate(${(a*57.3).toFixed(0)} ${cx} ${cy})"/>`;}
+  s+=`</g><g stroke="${C.dgold}" stroke-width="0.6">`;
+  for(let i=0;i<11;i++){const a=i/11*6.283+0.15;const cx=(x+Math.cos(a)*R*0.5).toFixed(1),cy=(y+Math.sin(a)*R*0.5).toFixed(1);s+=`<ellipse cx="${cx}" cy="${cy}" rx="4.9" ry="3" fill="${C.gold}" transform="rotate(${(a*57.3).toFixed(0)} ${cx} ${cy})"/>`;}
+  for(let i=0;i<7;i++){const a=i/7*6.283;const cx=(x+Math.cos(a)*R*0.26).toFixed(1),cy=(y+Math.sin(a)*R*0.26).toFixed(1);s+=`<ellipse cx="${cx}" cy="${cy}" rx="3.6" ry="2.4" fill="${C.gold}" transform="rotate(${(a*57.3).toFixed(0)} ${cx} ${cy})"/>`;}
+  s+=`<circle cx="${x}" cy="${y}" r="${(R*0.16).toFixed(1)}" fill="${C.dred}"/></g>`;return s;}
+function chrys(){ // 국화(9월) — 빨강 외곽 + 노랑 속 겹꽃 + 검은 잎
+  let s='';
+  [[24,108,25],[74,102,-20],[26,66,40],[74,70,-35]].forEach(([x,y,rot])=>{s+=`<ellipse cx="${x}" cy="${y}" rx="13" ry="7.5" fill="${C.blk}" transform="rotate(${rot} ${x} ${y})"/>`;});
+  s+=`<path d="M40 150 Q46 116 50 100 M62 150 Q58 118 54 102" stroke="${C.blk}" stroke-width="4" fill="none"/>`;
+  s+=chrysFlower(50,86,17);
+  return s;
+}
+function maple(){ // 단풍(10월)
+  let s='';
+  [[26,66,C.red,1.1],[62,52,C.gold,1.25],[44,92,C.red,1.15],[78,84,C.gold,1.0],[18,104,C.gold,0.95],[70,114,C.red,0.9]].forEach(([x,y,col,sc])=>{s+=mapleLeaf(x,y,col,sc);});
+  return s;
+}
+function mapleLeaf(x,y,col,sc){sc=sc||1;let s=`<g transform="translate(${x} ${y}) scale(${sc})" stroke="${C.blk}" stroke-width="1.1" fill="${col}">`;
+  for(let i=0;i<5;i++){const a=-1.885+i*0.9425;const lx=(Math.cos(a)*14).toFixed(1),ly=(Math.sin(a)*14).toFixed(1);
+    s+=`<path d="M0 0 L${(Math.cos(a-0.3)*7).toFixed(1)} ${(Math.sin(a-0.3)*7).toFixed(1)} L${lx} ${ly} L${(Math.cos(a+0.3)*7).toFixed(1)} ${(Math.sin(a+0.3)*7).toFixed(1)} Z"/>`;}
+  s+=`<line x1="0" y1="0" x2="0" y2="13" stroke="${C.blk}" stroke-width="1.3"/></g>`;return s;}
+function paulownia(){ // 오동(11월): 검은 둥근 잎 덩어리 + 파란 별꽃 + 검은 열매가지
+  let s='';
+  s+=berrySprig(30,20,1)+berrySprig(66,18,-1);
+  s+=`<ellipse cx="37" cy="120" rx="24" ry="20" fill="${C.blk}"/><ellipse cx="64" cy="118" rx="22" ry="19" fill="${C.blk}"/>`;
+  s+=blueStar(40,84,9)+blueStar(62,76,7.5);
+  return s;
+}
+function willow(){ // 버들(12월) — 상단 검은 잎 + 늘어진 가지
+  let s=`<path d="M2 2 Q36 4 30 40 Q22 60 2 54 Z" fill="${C.blk}"/>`;
+  s+=`<path d="M98 2 Q64 4 70 40 Q78 60 98 54 Z" fill="${C.blk}"/>`;
+  s+=`<path d="M50 4 Q46 40 48 72" stroke="${C.blk}" stroke-width="4" fill="none"/>`;
+  for(let i=0;i<6;i++){const x=30+i*9;s+=`<path d="M${x} 30 Q${x-6} 80 ${x-2} 122" stroke="${C.blk}" stroke-width="1.5" fill="none"/>`;}
+  return s;
+}
+function frog(x,y){return `<g stroke="${C.blk}" stroke-width="1"><ellipse cx="${x}" cy="${y}" rx="7" ry="5" fill="${C.gold}"/><circle cx="${x-3}" cy="${y-4}" r="2.4" fill="${C.gold}"/><circle cx="${x+3}" cy="${y-4}" r="2.4" fill="${C.gold}"/><circle cx="${x-3}" cy="${y-4}" r="0.9" fill="${C.blk}"/><circle cx="${x+3}" cy="${y-4}" r="0.9" fill="${C.blk}"/><path d="M${x-6} ${y+4} l-3 4 M${x+6} ${y+4} l3 4" stroke="${C.blk}" stroke-width="1.5"/></g>`;}
+function stream(){return `<path d="M4 106 q10 -7 20 0 q10 7 20 0 q10 -7 20 0" stroke="${C.blue}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M4 116 q10 -7 20 0 q10 7 20 0" stroke="${C.blue}" stroke-width="4" fill="none" stroke-linecap="round"/>`;}
+/* 동물/특수 */
+function crane(){return `<g stroke="${C.blk}" stroke-width="1.5"><ellipse cx="40" cy="70" rx="16" ry="9" fill="#fff"/><path d="M40 62 Q34 44 30 34" stroke="${C.blk}" stroke-width="3" fill="none"/><circle cx="29" cy="32" r="4" fill="#fff"/><circle cx="29" cy="30" r="2" fill="${C.red}"/><path d="M25 78 l-3 12 M34 80 l0 12" stroke="${C.blk}" stroke-width="2"/><path d="M48 66 q14 4 20 -2 q-8 10 -20 6Z" fill="#fff"/></g>`;}
+function sun(x,y){return `<circle cx="${x}" cy="${y}" r="14" fill="${C.red}"/>`;}
+function moon(x,y){return `<circle cx="${x}" cy="${y}" r="16" fill="#fff" stroke="#eee" stroke-width="1"/>`;}
+function bird(x,y,col,sc){sc=sc||1;return `<g transform="translate(${x} ${y}) scale(${sc})" stroke="${C.blk}" stroke-width="1.2">
+<ellipse cx="0" cy="0" rx="12" ry="9" fill="${col}"/>
+<circle cx="-10" cy="-5" r="6" fill="${col}"/>
+<circle cx="-11" cy="-6" r="1.5" fill="${C.blk}"/>
+<path d="M-15 -5 l-6 1 l6 3Z" fill="${C.gold}"/>
+<path d="M6 -1 q16 -3 22 3 q-13 7 -24 3Z" fill="${col}"/>
+<path d="M3 6 q6 9 1 15 q-8 -4 -8 -13Z" fill="${col}"/></g>`;}
+function boar(x,y){return `<g transform="translate(${x} ${y})" stroke="${C.blk}" stroke-width="1.6" stroke-linejoin="round">
+<ellipse cx="-4" cy="1" rx="23" ry="15" fill="${C.gold}"/>
+<path d="M15 -7 q17 2 21 9 q-6 9 -21 7Z" fill="${C.gold}"/>
+<circle cx="20" cy="-2" r="2" fill="${C.blk}"/>
+<path d="M31 4 l6 -2 M31 7 l6 2" stroke="${C.blk}" stroke-width="1.4"/>
+<path d="M27 9 l7 5" stroke="#fff" stroke-width="2.4"/>
+<path d="M-21 -13 l-3 -9 M-12 -16 l-1 -10 M-3 -16 l2 -10 M6 -13 l4 -9" stroke="${C.blk}" stroke-width="2.2"/>
+<path d="M-17 15 l-2 10 M-6 16 l-1 10 M7 15 l2 10 M17 12 l3 10" stroke="${C.blk}" stroke-width="3.4"/>
+<path d="M-27 -1 q-5 -2 -4 -7" stroke="${C.blk}" stroke-width="2" fill="none"/></g>`;}
+function deer(x,y){return `<g transform="translate(${x} ${y})" stroke="${C.blk}" stroke-width="1.5">
+<ellipse cx="2" cy="3" rx="19" ry="12" fill="${C.gold}"/>
+<path d="M-14 -1 q-9 -6 -7 -19" stroke="${C.blk}" stroke-width="4.5" fill="none"/>
+<ellipse cx="-22" cy="-23" rx="5.5" ry="8" fill="${C.gold}"/>
+<path d="M-25 -31 l-5 -9 l4 3 l-1 -7 M-19 -31 l5 -9 l-4 3 l1 -7" stroke="${C.blk}" stroke-width="1.8" fill="none"/>
+<circle cx="-24" cy="-23" r="1.8" fill="${C.blk}"/>
+<path d="M-11 14 l-2 13 M-3 15 l-1 13 M9 14 l2 13 M16 10 l3 13" stroke="${C.blk}" stroke-width="3.4"/>
+<g fill="#fff" stroke="none"><circle cx="-2" cy="0" r="1.8"/><circle cx="7" cy="3" r="1.8"/><circle cx="2" cy="7" r="1.8"/><circle cx="11" cy="-3" r="1.8"/></g>
+<path d="M20 -3 q5 -2 4 -9" stroke="${C.blk}" stroke-width="2" fill="none"/></g>`;}
+function phoenix(x,y){return `<g transform="translate(${x} ${y})" stroke="${C.blk}" stroke-width="1.2">
+<path d="M-3 -13 q6 -4 5 -10 q4 4 1 9 q4 -2 4 3Z" fill="${C.red}"/>
+<ellipse cx="0" cy="-3" rx="9" ry="8" fill="${C.blk}"/>
+<path d="M-9 -5 l-7 -1 l6 4Z" fill="${C.gold}"/>
+<path d="M-8 2 q-2 4 0 6" fill="${C.red}" stroke="none"/>
+<circle cx="-3" cy="-5" r="1.6" fill="#fff"/>
+<path d="M5 -6 q19 -6 25 -21 q1 21 -18 29Z" fill="${C.blk}"/>
+<path d="M6 1 q15 4 23 0 q-11 11 -23 4Z" fill="${C.red}"/>
+<path d="M-2 5 l-2 9 M4 5 l2 9" stroke="${C.blk}" stroke-width="2"/></g>`;}
+function butterfly(x,y){return `<g stroke="${C.blk}" stroke-width="1.2"><ellipse cx="${x-7}" cy="${y-4}" rx="8" ry="6" fill="${C.red}"/><ellipse cx="${x+7}" cy="${y-4}" rx="8" ry="6" fill="${C.gold}"/><ellipse cx="${x-6}" cy="${y+6}" rx="6" ry="5" fill="${C.gold}"/><ellipse cx="${x+6}" cy="${y+6}" rx="6" ry="5" fill="${C.red}"/><line x1="${x}" y1="${y-8}" x2="${x}" y2="${y+10}" stroke="${C.blk}" stroke-width="2.5"/></g>`;}
+function cup(x,y){return `<g stroke="${C.blk}" stroke-width="1.4"><path d="M${x-11} ${y-6} h22 l-4 12 h-14Z" fill="${C.gold}"/><ellipse cx="${x}" cy="${y-6}" rx="11" ry="3.5" fill="${C.red}"/></g>`;}
+function bridge(){return `<path d="M14 96 Q50 70 86 96" stroke="${C.gold}" stroke-width="7" fill="none"/><path d="M14 96 l0 14 M86 96 l0 14 M32 84 l0 18 M68 84 l0 18 M50 76 l0 22" stroke="${C.dgold}" stroke-width="3"/>`;}
+function curtain(){ // 만막: 검은 언덕 + 홍청 격자 띠
+  let s=`<path d="M2 150 Q50 120 98 150 Z" fill="${C.blk}"/>`;
+  s+=`<rect x="8" y="112" width="84" height="15" rx="2" fill="#f7f0dd" stroke="${C.blk}" stroke-width="1"/>`;
+  for(let i=0;i<7;i++){const x=13+i*11.6,col=i%2?C.blue:C.red;s+=`<path d="M${x} 119.5 l5.5 -5.5 l5.5 5.5 l-5.5 5.5Z" fill="${col}" stroke="${C.blk}" stroke-width="0.5"/>`;}
+  return s;
+}
+function rainman(){return `<g stroke="${C.blk}" stroke-width="1.3">
+<line x1="50" y1="50" x2="50" y2="64" stroke="${C.blk}" stroke-width="2"/>
+<path d="M33 52 q17 -15 34 0 Z" fill="${C.blk}"/>
+<circle cx="50" cy="70" r="5.5" fill="${C.cream}"/>
+<path d="M42 78 q8 -6 16 0 l4 28 q-12 5 -24 0 Z" fill="${C.red}"/>
+<path d="M44 84 l-7 11 M56 84 l7 11" stroke="${C.red}" stroke-width="4.5" stroke-linecap="round"/></g>`;}
+
+function hwatuFace(c){
+  const m=c.month;
+  let s=`<rect x="1.5" y="1.5" width="97" height="147" rx="8" fill="${C.cream}"/>`;
+  const K=c.kind;
+  /* 배경 식물 */
+  if(m===1){ s+=pine(); }
+  else if(m===2){ s+=plumBranch(); }
+  else if(m===3){ s+=cherry(); }
+  else if(m===4){ s+=clover(C.blk); }
+  else if(m===5){ s+=iris(); }
+  else if(m===6){ s+=peony(); }
+  else if(m===7){ s+=clover(C.red); }
+  else if(m===8){ s+=grassHill(); }
+  else if(m===9){ s+=chrys(); }
+  else if(m===10){ s+=maple(); }
+  else if(m===11){ s+=paulownia(); }
+  else if(m===12){ s+=willow(); }
+  /* 종류별 오버레이 */
+  if(K==='광'){
+    let seal=[80,132];
+    if(m===1){ s+=sun(74,30)+crane(); }
+    else if(m===3){ s+=curtain(); seal=[24,134]; }
+    else if(m===8){ s=`<rect x="1.5" y="1.5" width="97" height="147" rx="8" fill="${C.red}"/><path d="M0 150 Q50 100 100 150 Z" fill="${C.blk}"/>`+moon(50,52); }
+    else if(m===11){
+      s=`<rect x="1.5" y="1.5" width="97" height="147" rx="8" fill="${C.cream}"/>`;
+      s+=`<path d="M1.5 1.5 h97 v56 q-48 20 -97 3 Z" fill="${C.red}"/>`;
+      s+=berrySprig(74,12,-1)+phoenix(42,34);
+      s+=`<ellipse cx="37" cy="122" rx="24" ry="20" fill="${C.blk}"/><ellipse cx="64" cy="120" rx="22" ry="19" fill="${C.blk}"/>`;
+      s+=blueStar(66,90,8);
+      seal=[46,120];
+    }
+    else if(m===12){
+      s=`<rect x="1.5" y="1.5" width="97" height="147" rx="8" fill="${C.cream}"/>`;
+      s+=willow()+stream()+rainman()+frog(28,120);
+      seal=[24,24];
+    }
+    s+=gwangSeal(seal[0],seal[1]);
+  } else if(K==='열'){
+    if(m===2){ s+=bird(52,58,C.gold,1.1); }
+    else if(m===4){ s+=bird(50,52,C.gold,1.7); }
+    else if(m===5){ s+=bridge(); }
+    else if(m===6){ s+=butterfly(50,44); }
+    else if(m===7){ s+=boar(50,54); }
+    else if(m===8){ s+=bird(38,44,C.gold,0.9)+bird(64,52,C.gold,0.9); }
+    else if(m===9){ s+=cup(52,52); }
+    else if(m===10){ s+=deer(50,52); }
+    else if(m===12){ s+=bird(52,54,'#20263a',1.8); }
+    if(c.godori) s+=`<circle cx="78" cy="16" r="9" fill="${C.red}"/><text x="78" y="21" font-size="10" text-anchor="middle" fill="#fff" font-weight="900" font-family="serif">鳥</text>`;
+  } else if(K==='단'){
+    s+=ribbon(c.dan);
+  } else { /* 피 */
+    if(c.ssang){ s+=`<circle cx="50" cy="130" r="12" fill="${C.gold}" stroke="${C.dgold}" stroke-width="1.5"/><text x="50" y="135" font-size="12" text-anchor="middle" fill="${C.dred}" font-weight="900" font-family="'Gowun Batang',serif">쌍</text>`; }
+  }
+  /* 테두리 안쪽 라인 */
+  s+=`<rect x="1.5" y="1.5" width="97" height="147" rx="8" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="1"/>`;
+  return s;
+}
+
+
+/* ===== 실사 카드 이미지 배선 =====
+   cards/ 폴더에 이미지를 넣으면 자동으로 사용, 없으면 위 SVG 그림으로 대체(fallback).
+   USE_CARD_IMAGES=false 로 두면 이미지 시도 없이 항상 그림 카드 사용(404 없음). */
+const USE_CARD_IMAGES = false;
+const CARD_IMAGE_BASE = 'cards/';       // index.html 기준 상대경로 (저장소 루트의 cards/ 폴더)
+const CARD_IMAGE_EXTS = ['png','jpg','svg'];
+/* 카드 id → 파일 이름(확장자 제외). 예: 1_gwang, 2_yeol, 3_tti, 11_ssangpi, 12_bikwang, 1_pi1 */
+const IMG_KEY = (function(){
+  const map={}, cnt={};
+  DECK.forEach(c=>{
+    const m=c.month; let k;
+    if(c.kind==='광') k = c.bi ? m+'_bikwang' : m+'_gwang';
+    else if(c.kind==='열') k = m+'_yeol';
+    else if(c.kind==='단') k = m+'_tti';
+    else if(c.ssang) k = m+'_ssangpi';
+    else { cnt[m]=(cnt[m]||0)+1; k = m+'_pi'+cnt[m]; }
+    map[c.id]=k;
+  });
+  return map;
+})();
+
+function Card({id,size,back,sel,onClick,thrown}){
+  const [ext,setExt]=useState(0); // 0..EXTS-1: 이미지 시도 / EXTS 이상: 그림 카드로 대체
+  if(back)return <div className={"card back "+(size||'')}/>;
+  const c=cardOf(id);
+  const cls=["card","face",size||'',sel?'sel':'',onClick?'clickable':'',thrown?'thrown':''].join(' ');
+  const useImg = USE_CARD_IMAGES && ext < CARD_IMAGE_EXTS.length;
+  return (
+    <div className={cls} onClick={onClick}>
+      {useImg
+        ? <img key={ext} className="card-svg" draggable="false" alt=""
+            src={CARD_IMAGE_BASE+IMG_KEY[c.id]+'.'+CARD_IMAGE_EXTS[ext]}
+            onError={()=>setExt(ext+1)}/>
+        : <svg className="card-svg" viewBox="0 0 100 150" dangerouslySetInnerHTML={{__html:hwatuFace(c)}}/>}
+      <span className="card-badge">{c.month}</span>
+    </div>);
+}
+
+/* 리빌 한 장면: 짝이면 바닥패 위에 비스듬히 겹쳐 먹고(가져감), 아니면 그대로 깔림 */
+function RevealScene({label,card,partner,taken,delay}){
+  const st={animationDelay:delay+'s'};
+  return (
+    <div className="rv-slot">
+      <div className="rv-lbl">{label}</div>
+      <div className="rv-scene">
+        {taken&&partner!=null&&<div className="rv-base" style={st}><Card id={partner} size="sm"/></div>}
+        <div className={"rv-top "+(taken?'rv-match':'rv-lay')} style={st}><Card id={card} size="sm"/></div>
+      </div>
+      <div className={"rv-cap "+(taken?'ok':'no')} style={{animationDelay:(delay+0.28)+'s'}}>{taken?'짝! 먹기':'깔림'}</div>
+    </div>);
+}
+
+/* 획득패 묶음(광/열/단/피) 미니 표시 */
+function CapturedRow({ids,tiny}){
+  const groups={'광':[],'열':[],'단':[],'피':[]};
+  (ids||[]).forEach(id=>groups[cardOf(id).kind].push(id));
+  return (
+    <div className={tiny?"mini-caps":"my-caps"}>
+      {['광','열','단','피'].map(k=>groups[k].length>0&&(
+        <div className="cap-group" key={k}>
+          <span className="cap-lbl">{k}{k==='피'?baseScore(groups[k]).piCnt||groups[k].length:groups[k].length}</span>
+          {groups[k].slice(0,tiny?4:12).map(id=><Card key={id} id={id} size="xs"/>)}
+          {groups[k].length>(tiny?4:12)&&<span style={{fontSize:9,color:'#C9A227'}}>+{groups[k].length-(tiny?4:12)}</span>}
+        </div>))}
+    </div>);
+}
+
+/* ---------- 앱 루트 ---------- */
+function App(){
+  const pid=useMemo(myPid,[]);
+  const [name,setName]=useState(storage.get('gs_name')||'');
+  const [roomCode,setRoomCode]=useState(storage.get('gs_room')||'');
+  const [room,setRoom]=useState(null);
+  const [err,setErr]=useState('');
+  const [showRules,setShowRules]=useState(false);
+
+  /* 방 구독 */
+  useEffect(()=>{
+    if(!roomCode){setRoom(null);return;}
+    const ref=db.ref('rooms/'+roomCode);
+    const cb=ref.on('value',snap=>{
+      const v=snap.val();
+      if(!v){setRoom(null);setRoomCode('');storage.set('gs_room','');return;}
+      setRoom(v);
+    });
+    return ()=>ref.off('value',cb);
+  },[roomCode]);
+
+  /* 접속 상태(presence) */
+  useEffect(()=>{
+    if(!roomCode||!room||!room.players||!room.players[pid])return;
+    const meRef=db.ref('rooms/'+roomCode+'/players/'+pid);
+    meRef.update({connected:true});
+    meRef.onDisconnect().update({connected:false});
+  },[roomCode,!!(room&&room.players&&room.players[pid])]);
+
+  const createRoom=async(perPoint)=>{
+    if(!name.trim()){setErr('닉네임을 입력해 주세요');return;}
+    storage.set('gs_name',name.trim());
+    const code=Array.from({length:4},()=> 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*31)]).join('');
+    try{
+      await db.ref('rooms/'+code).set({
+        hostId:pid,perPoint,phase:'waiting',dealerIdx:0,round:1,createdAt:Date.now(),
+        players:{[pid]:{name:name.trim(),ready:false,seat:Date.now(),cum:0,connected:true}}
+      });
+      storage.set('gs_room',code);setRoomCode(code);setErr('');
+    }catch(e){setErr('방 생성 실패: Firebase 설정을 확인하세요');}
+  };
+
+  const joinRoom=async(code)=>{
+    if(!name.trim()){setErr('닉네임을 입력해 주세요');return;}
+    storage.set('gs_name',name.trim());
+    code=code.toUpperCase().trim();
+    try{
+      const snap=await db.ref('rooms/'+code).get();
+      const v=snap.val();
+      if(!v){setErr('방을 찾을 수 없습니다');return;}
+      const cnt=Object.keys(v.players||{}).length;
+      const rejoin=v.players&&v.players[pid];
+      if(!rejoin){
+        if(v.phase!=='waiting'){setErr('이미 게임이 진행 중인 방입니다');return;}
+        if(cnt>=6){setErr('정원(6명)이 가득 찼습니다');return;}
+        await db.ref('rooms/'+code+'/players/'+pid).set(
+          {name:name.trim(),ready:false,seat:Date.now(),cum:0,connected:true});
+      }
+      storage.set('gs_room',code);setRoomCode(code);setErr('');
+    }catch(e){setErr('입장 실패: 네트워크를 확인하세요');}
+  };
+
+  const leaveRoom=async()=>{
+    if(!room)return;
+    const others=Object.keys(room.players||{}).filter(p=>p!==pid);
+    if(others.length===0){await db.ref('rooms/'+roomCode).remove();}
+    else{
+      await db.ref('rooms/'+roomCode+'/players/'+pid).remove();
+      if(room.hostId===pid){
+        const nextHost=others.sort((a,b)=>room.players[a].seat-room.players[b].seat)[0];
+        await db.ref('rooms/'+roomCode+'/hostId').set(nextHost);
+      }
+    }
+    storage.set('gs_room','');setRoomCode('');
+  };
+
+  let screen;
+  if(!room) screen=<Home name={name} setName={setName} err={err} onCreate={createRoom} onJoin={joinRoom} openRules={()=>setShowRules(true)}/>;
+  else if(room.phase==='waiting') screen=<Waiting room={room} roomCode={roomCode} pid={pid} onLeave={leaveRoom} openRules={()=>setShowRules(true)}/>;
+  else screen=<Game room={room} roomCode={roomCode} pid={pid} openRules={()=>setShowRules(true)}/>;
+
+  return <>
+    {screen}
+    {showRules&&<RulesCardNews onClose={()=>setShowRules(false)}/>}
+  </>;
+}
+
+/* ---------- 홈 ---------- */
+function Home({name,setName,err,onCreate,onJoin,openRules}){
+  const [perPoint,setPerPoint]=useState(100);
+  const [code,setCode]=useState('');
+  return (
+    <div className="home">
+      <div className="logo">
+        <div className="seal-mark">花鬪</div>
+        <h1>고스톱</h1>
+        <p>같이 치는 실시간 화투판 · 3~6인</p>
+      </div>
+      {err&&<div className="err">{err}</div>}
+      <div className="field">
+        <label>닉네임</label>
+        <input value={name} maxLength={8} placeholder="예: 타짜" onChange={e=>setName(e.target.value)}/>
+      </div>
+      <div className="field">
+        <label>점당 금액 (방 만들 때)</label>
+        <div className="per-point">
+          {[100,200,300,500,1000].map(v=>(
+            <button key={v} className={"pp"+(perPoint===v?' on':'')} onClick={()=>setPerPoint(v)}>{v}원</button>))}
+        </div>
+      </div>
+      <button className="btn btn-gold" onClick={()=>onCreate(perPoint)}>방 만들기 · 점당 {perPoint}원</button>
+      <div className="divider">또는 초대 코드로 입장</div>
+      <div className="field">
+        <input value={code} maxLength={4} placeholder="초대 코드 4자리" style={{textTransform:'uppercase',letterSpacing:'6px',textAlign:'center'}}
+          onChange={e=>setCode(e.target.value)}/>
+      </div>
+      <button className="btn" onClick={()=>onJoin(code)}>입장하기</button>
+      <button className="btn btn-ghost btn-sm" style={{alignSelf:'center'}} onClick={openRules}>📖 룰 설명 보기</button>
+    </div>);
+}
+
+/* ---------- 대기실 ---------- */
+function Waiting({room,roomCode,pid,onLeave,openRules}){
+  const players=Object.entries(room.players||{}).map(([id,p])=>({id,...p}))
+    .sort((a,b)=>a.seat-b.seat);
+  const me=players.find(p=>p.id===pid);
+  const isHost=room.hostId===pid;
+  const allReady=players.length>=2&&players.every(p=>p.ready);
+  const dealerPid=players[(room.dealerIdx||0)%players.length]&&players[(room.dealerIdx||0)%players.length].id;
+
+  const toggleReady=()=>db.ref('rooms/'+roomCode+'/players/'+pid+'/ready').set(!me.ready);
+
+  const startGame=async()=>{
+    if(!allReady)return;
+    const list=players.map(p=>({pid:p.id,name:p.name}));
+    const g=newGame(list,(room.dealerIdx||0)%players.length,room.perPoint,room.round||1);
+    g.seq=1;
+    await db.ref('rooms/'+roomCode).update({phase:'playing',gameJson:JSON.stringify(g),gpDecisions:null});
+  };
+
+  return (
+    <div className="wait">
+      <div className="room-code-card">
+        <div className="lbl">초대 코드</div>
+        <div className="code">{roomCode}</div>
+        <div className="pp-info">점당 {room.perPoint}원 · {players.length}/6명 · {room.round||1}판째
+          {players.length===2&&' · 2인 맞고 (10장씩)'}
+          {players.length>=4&&' · 매 판 선은 관전'}</div>
+      </div>
+      <div className="plist">
+        {players.map((p,i)=>(
+          <div key={p.id} className={"prow"+(p.id===pid?' me':'')}>
+            <div className="avatar" style={{background:AV_COLORS[i%6]}}>{p.name[0]}</div>
+            <div className="pname">
+              {p.name}
+              {p.id===room.hostId&&<span className="tag tag-host">방장</span>}
+              {p.id===dealerPid&&players.length>=4&&<span className="tag tag-dealer">이번 판 선(관전)</span>}
+              {p.connected===false&&<span className="tag tag-off">오프라인</span>}
+              <span className={"cum "+cumClass(p.cum||0)}>{signedWon(p.cum||0)}</span>
+            </div>
+            <span className={"ready-pill "+(p.ready?'ready-on':'ready-off')}>{p.ready?'준비완료':'대기 중'}</span>
+          </div>))}
+        {players.length<2&&<div style={{textAlign:'center',fontSize:13,color:'rgba(243,234,211,.55)',padding:'8px'}}>
+          최소 2명이 모여야 시작할 수 있어요 (2명=맞고) — 코드를 공유해 주세요</div>}
+      </div>
+      <button className={"btn "+(me&&me.ready?'':'btn-gold')} onClick={toggleReady}>
+        {me&&me.ready?'준비 취소':'준비 완료'}</button>
+      {isHost&&<button className="btn btn-seal" disabled={!allReady} onClick={startGame}>
+        {allReady?'게임 시작':'전원 준비완료 시 시작 가능'}</button>}
+      <div style={{display:'flex',gap:10}}>
+        <button className="btn btn-ghost btn-sm" style={{flex:1}} onClick={openRules}>📖 룰 설명</button>
+        <button className="btn btn-ghost btn-sm" style={{flex:1}} onClick={onLeave}>방 나가기</button>
+      </div>
+    </div>);
+}
+</script>
+<script type="text/babel">
+/* ---------- 게임 테이블 ---------- */
+function Game({room,roomCode,pid,openRules}){
+  const g=useMemo(()=>{try{return JSON.parse(room.gameJson);}catch(e){return null;}},[room.gameJson]);
+  const players=Object.entries(room.players||{}).map(([id,p])=>({id,...p})).sort((a,b)=>a.seat-b.seat);
+  const nameOfPid=id=>{const p=players.find(x=>x.id===id);return p?p.name:'?';};
+  const colorOfPid=id=>AV_COLORS[players.findIndex(x=>x.id===id)%6];
+  const [sel,setSel]=useState(null);
+  const [confirmBox,setConfirmBox]=useState(null); /* {type:'bomb'|'shake', cardId} */
+  const [toast,setToast]=useState(null);
+  const [banner,setBanner]=useState(null);
+  const [reveal,setReveal]=useState(null);
+  const prevSeq=useRef(0);
+  const prevTurn=useRef(null);
+  const prevResult=useRef(false);
+
+  /* 이벤트 토스트 + 효과음 */
+  useEffect(()=>{
+    if(!g)return;
+    if(g.seq!==prevSeq.current){
+      prevSeq.current=g.seq;
+      const an=g.anim||{};
+      sndSlap();
+      if(an.flipped!=null) setTimeout(sndFlip,110);
+      if(an.captured&&an.captured.length) setTimeout(sndCollect,220);
+      if(an.played!=null){
+        const cap=an.captured||[];
+        const pc=cardOf(an.played);
+        const playedTaken=cap.indexOf(an.played)>=0;
+        const playedPartner=playedTaken?(cap.find(id=>id!==an.played&&id!==an.flipped&&cardOf(id).month===pc.month)):null;
+        let flipTaken=false,flipPartner=null;
+        if(an.flipped!=null){
+          const fc=cardOf(an.flipped);
+          flipTaken=cap.indexOf(an.flipped)>=0;
+          flipPartner=flipTaken?(cap.find(id=>id!==an.flipped&&id!==an.played&&cardOf(id).month===fc.month)):null;
+        }
+        setReveal({played:an.played,playedTaken,playedPartner:(playedPartner==null?null:playedPartner),
+          flipped:an.flipped,flipTaken,flipPartner:(flipPartner==null?null:flipPartner),key:g.seq});
+        setTimeout(()=>setReveal(r=>r&&r.key===g.seq?null:r),1950);
+      }
+      if(g.lastEvents&&g.lastEvents.length){
+        const special=g.lastEvents.find(e=>/뻑|쪽|따닥|폭탄|흔들|연뻑/.test(e));
+        if(special){
+          const cls=/폭탄|뻑/.test(special)&&!/잡/.test(special)?'eb-red'
+            :/흔들/.test(special)?'eb-blue':'eb-gold';
+          const txt=special.replace(/!.*$/,'').replace(/\s*\(.*\)/,'');
+          setBanner({txt,cls,key:g.seq}); setTimeout(sndEvent,120);
+          setTimeout(()=>setBanner(b=>b&&b.key===g.seq?null:b),1500);
+        }
+      }
+    }
+    /* 판 종료 승리 배너 */
+    const hasResult=!!(g&&g.result);
+    if(hasResult&&!prevResult.current){
+      setBanner({txt:g.result.reason==='3연뻑'?'즉시 승리':'승리!',cls:'eb-gold',key:'win'+g.seq});
+      setTimeout(()=>setBanner(b=>b&&b.key==='win'+g.seq?null:b),1500);
+    }
+    prevResult.current=hasResult;
+    if(g.turnPid!==prevTurn.current){
+      prevTurn.current=g.turnPid;
+      if(g.turnPid===pid&&g.status==='turn')sndTurn();
+    }
+    setSel(null);
+  },[g&&g.seq,g&&g.turnPid,g&&g.status]);
+
+  if(!g)return <div style={{padding:40,textAlign:'center'}}>게임 정보를 불러오는 중…</div>;
+
+  const iAmActive=g.activePids.includes(pid);
+  const myTurn=g.status==='turn'&&g.turnPid===pid&&iAmActive;
+  const myHand=g.hands[pid]||[];
+  const myScore=iAmActive?baseScore(g.captured[pid]||[]).score:0;
+
+  /* 게임 상태 기록 (턴 액션은 항상 현재 턴 플레이어 1명만 쓰기 → 충돌 없음) */
+  const writeGame=async(ng)=>{
+    ng.seq=(g.seq||0)+1;
+    const updates={gameJson:JSON.stringify(ng)};
+    if(ng.status==='result'&&ng.result&&!ng.result.applied){
+      /* 정산 확정: 누적 손익 반영(합계 0). 결과를 쓰는 클라이언트가 1회만 적용 */
+      ng.result.applied=true;
+      updates.gameJson=JSON.stringify(ng);
+      const deltas=resultToDeltas(ng.result);
+      Object.entries(deltas).forEach(([p,d])=>{
+        updates['players/'+p+'/cum']=(room.players[p]&&room.players[p].cum||0)+d;
+      });
+    }
+    await db.ref('rooms/'+roomCode).update(updates);
+  };
+
+  const clone=()=>JSON.parse(JSON.stringify(g));
+
+  const doPlay=async(cardId,opts)=>{
+    const ng=clone();
+    executeTurn(ng,pid,Object.assign({type:'play',cardId},opts||{}));
+    afterTurn(ng,pid);
+    await writeGame(ng);
+  };
+  const doBomb=async(cardId)=>{
+    const ng=clone();
+    executeTurn(ng,pid,{type:'bomb',cardId});
+    afterTurn(ng,pid);
+    await writeGame(ng);
+  };
+  const doPass=async()=>{
+    const ng=clone();
+    executeTurn(ng,pid,{type:'pass'});
+    afterTurn(ng,pid);
+    await writeGame(ng);
+  };
+
+  const onHandTap=(cardId)=>{
+    if(!myTurn)return;
+    const m=cardOf(cardId).month;
+    const cntInHand=myHand.filter(id=>cardOf(id).month===m).length;
+    const onFloor=g.floor.some(id=>cardOf(id).month===m);
+    if(cntInHand===3&&onFloor){setConfirmBox({type:'bomb',cardId});return;}
+    if(cntInHand===3&&!onFloor&&!(g.shakenMonths[pid]||[]).includes(m)){setConfirmBox({type:'shake',cardId});return;}
+    doPlay(cardId);
+  };
+
+  /* 고/스톱 선택 */
+  const doGoStop=async(choice)=>{
+    const ng=clone();
+    chooseGoStop(ng,pid,choice);
+    await writeGame(ng);
+  };
+
+  /* 광팔기: 결정은 별도 노드에 기록, 방장이 취합해 반영 (동시 쓰기 충돌 방지) */
+  const gpDecide=(d)=>db.ref('rooms/'+roomCode+'/gpDecisions/'+pid).set(d);
+  useEffect(()=>{
+    if(room.hostId!==pid)return;
+    if(!g||g.status!=='gwangpal')return;
+    const dec=room.gpDecisions||{};
+    if(g.gwangpalEligible.every(p=>dec[p])){
+      const ng=clone();
+      ng.gwangpalDecisions=dec;
+      resolveGwangpal(ng);
+      writeGame(ng).then(()=>db.ref('rooms/'+roomCode+'/gpDecisions').remove());
+    }
+  },[room.gpDecisions,g&&g.status]);
+
+  /* 다음 판 (방장) */
+  const backToLobby=async()=>{
+    const updates={phase:'waiting',gameJson:null,gpDecisions:null,
+      dealerIdx:((room.dealerIdx||0)+1)%players.length,round:(room.round||1)+1};
+    players.forEach(p=>{updates['players/'+p.id+'/ready']=false;});
+    await db.ref('rooms/'+roomCode).update(updates);
+  };
+  const [confirmEnd,setConfirmEnd]=useState(false);
+  const endGame=async()=>{
+    const updates={phase:'waiting',gameJson:null,gpDecisions:null};
+    players.forEach(p=>{updates['players/'+p.id+'/ready']=false;});
+    await db.ref('rooms/'+roomCode).update(updates);
+    setConfirmEnd(false);
+  };
+
+  /* 렌더용 좌석 */
+  const oppSeats=g.activePids.filter(p=>p!==pid);
+  const restAll=[g.dealerPid&&players.length>=4?g.dealerPid:null]
+    .concat(g.restingPids||[]).filter(Boolean).filter(p=>!g.activePids.includes(p));
+  const deadName=g.deadPid?nameOfPid(g.deadPid):null;
+
+  return (
+    <div className="table-wrap">
+      {banner&&<div className="evt-banner"><div className={"eb-in "+banner.cls} key={banner.key}>{banner.txt}</div></div>}
+      {reveal&&(
+        <div className="reveal-wrap">
+          <div className="reveal-panel" key={reveal.key}>
+            <RevealScene label="낸 패" card={reveal.played} partner={reveal.playedPartner} taken={reveal.playedTaken} delay={0}/>
+            {reveal.flipped!=null&&<>
+              <div className="rv-arrow">▶</div>
+              <RevealScene label="더미 뒤집기" card={reveal.flipped} partner={reveal.flipPartner} taken={reveal.flipTaken} delay={0.55}/>
+            </>}
+          </div>
+        </div>)}
+      {/* 상단바: 코드/점당/누적 손익 */}
+      <div className="topbar">
+        <span className="rc">{roomCode}</span>
+        <span className="chip">점당 {g.perPoint}원</span>
+        <span className="chip">{room.round||1}판째</span>
+        <span className="spacer"/>
+        <button className="btn btn-ghost btn-sm" onClick={openRules}>📖</button>
+        <button className="btn btn-sm" style={{background:'rgba(181,56,47,.85)',color:'#fff',border:'none'}} onClick={()=>setConfirmEnd(true)}>게임 끝내기</button>
+      </div>
+      <div className="topbar" style={{borderBottom:'1px solid rgba(243,234,211,.12)'}}>
+        {players.map(p=>(
+          <span key={p.id} className="chip">{p.name} <b className={cumClass(p.cum||0)}>{signedWon(p.cum||0)}</b></span>))}
+      </div>
+
+      {/* 상대 좌석 */}
+      <div className="opp-row">
+        {oppSeats.map(op=>{
+          const s=baseScore(g.captured[op]||[]);
+          return (
+            <div key={op} className={"seat"+(g.turnPid===op&&g.status==='turn'?' turn':'')}>
+              <div className="seat-head">
+                <div className="avatar" style={{background:colorOfPid(op)}}>{nameOfPid(op)[0]}</div>
+                <span className="nm">{nameOfPid(op)}</span>
+              </div>
+              <div className="seat-stats">
+                <span className="sc">{s.score}점</span>
+                <span>패 {(g.hands[op]||[]).length}장</span>
+                {(g.goCount[op]||0)>0&&<span style={{color:'#ff9a8e',fontWeight:900}}>{g.goCount[op]}고</span>}
+                {(g.shake[op]||0)>0&&<span>흔듦</span>}
+                {(g.bomb[op]||0)>0&&<span>폭탄</span>}
+              </div>
+              <CapturedRow ids={g.captured[op]} tiny/>
+            </div>);
+        })}
+      </div>
+      {(restAll.length>0||g.deadPid)&&(
+        <div className="rest-row">
+          {restAll.map(p=><span key={p} className="rest">{nameOfPid(p)}{p===g.dealerPid?' · 선(관전)':' · 대기'}</span>)}
+          {g.deadPid&&<span className="rest">💰 {deadName} · 광팔고 관전</span>}
+        </div>)}
+
+      {/* 중앙: 바닥패 + 더미 */}
+      <div className="center-zone">
+        {toast&&<div className="event-toast">{toast}</div>}
+        <div className="deck-area">
+          <div className="deck-pile"/>
+          <span className="deck-cnt">더미 {(g.deck||[]).length}</span>
+        </div>
+        <div className="floor">
+          {(g.floor||[]).map(id=><Card key={id} id={id} size="sm"/>)}
+          {(g.floor||[]).length===0&&<span style={{color:'rgba(255,255,255,.55)',fontSize:13}}>바닥이 비었습니다</span>}
+        </div>
+      </div>
+
+      {/* 내 구역 */}
+      <div className="my-zone">
+        <div className="my-head">
+          <span className="nm">{nameOfPid(pid)}</span>
+          {iAmActive&&<span className="score-badge">{myScore}점</span>}
+          {(g.goCount[pid]||0)>0&&<span className="chip" style={{color:'#ff9a8e'}}>{g.goCount[pid]}고</span>}
+          {(g.shake[pid]||0)>0&&<span className="chip">흔들기 ×2</span>}
+          {(g.bomb[pid]||0)>0&&<span className="chip">폭탄 ×2</span>}
+          <span className="spacer"/>
+          {myTurn&&<span className="turn-note">내 차례 — 낼 패를 탭하면 바로 냅니다</span>}
+          {g.status==='turn'&&!myTurn&&iAmActive&&<span style={{fontSize:12,color:'rgba(243,234,211,.6)'}}>{nameOfPid(g.turnPid)} 차례…</span>}
+        </div>
+        {iAmActive?(
+          <>
+            <CapturedRow ids={g.captured[pid]}/>
+            <div className="hand">
+              {myHand.map(id=><Card key={id} id={id} sel={sel===id} onClick={()=>onHandTap(id)}/>)}
+              {myHand.length===0&&(g.bombTokens[pid]||0)>0&&myTurn&&
+                <button className="btn btn-gold" onClick={doPass}>💣 더미만 뒤집기 (폭탄권 {g.bombTokens[pid]})</button>}
+              {myHand.length===0&&(g.bombTokens[pid]||0)===0&&<span style={{fontSize:13,color:'rgba(243,234,211,.5)',padding:'14px 4px'}}>손패를 모두 냈습니다</span>}
+            </div>
+          </>
+        ):(
+          <div style={{textAlign:'center',padding:'18px 8px',fontSize:14,color:'rgba(243,234,211,.65)'}}>
+            {pid===g.deadPid?'광을 팔고 관전 중입니다 — 판이 끝나면 정산돼요':'이번 판은 관전입니다 — 다음 판에 참여해요'}
+          </div>)}
+      </div>
+
+      {/* ----- 모달들 ----- */}
+      {g.status==='gwangpal'&&<GwangpalModal g={g} pid={pid} decided={(room.gpDecisions||{})[pid]} onDecide={gpDecide} nameOfPid={nameOfPid}/>}
+      {g.status==='gostop'&&g.pending&&<GoStopModal g={g} pid={pid} nameOfPid={nameOfPid} onChoose={doGoStop}/>}
+      {confirmBox&&<ShakeBombModal box={confirmBox}
+        onClose={()=>setConfirmBox(null)}
+        onBomb={()=>{setConfirmBox(null);doBomb(confirmBox.cardId);}}
+        onShake={()=>{setConfirmBox(null);doPlay(confirmBox.cardId,{shake:true});}}
+        onPlain={()=>{setConfirmBox(null);doPlay(confirmBox.cardId);}}/>}
+      {g.status==='result'&&g.result&&<ResultModal g={g} room={room} pid={pid} nameOfPid={nameOfPid} onNext={backToLobby}/>}
+      {confirmEnd&&(
+        <div className="overlay" onClick={()=>setConfirmEnd(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:320,textAlign:'center'}}>
+            <h2>게임 끝내기</h2>
+            <p style={{fontSize:14,lineHeight:1.7,color:'#F3EAD3'}}>이번 판을 끝내고 모두 대기실로 돌아갑니다.<br/>정산은 이번 판을 무효로 하고 진행돼요.</p>
+            <div style={{display:'flex',gap:8,marginTop:14}}>
+              <button className="btn btn-ghost" style={{flex:1}} onClick={()=>setConfirmEnd(false)}>취소</button>
+              <button className="btn btn-seal" style={{flex:1}} onClick={endGame}>끝내기</button>
+            </div>
+          </div>
+        </div>)}
+    </div>);
+}
+
+/* ---------- 광팔기 모달 ---------- */
+function GwangpalModal({g,pid,decided,onDecide,nameOfPid}){
+  const eligible=g.gwangpalEligible.includes(pid);
+  return (
+    <div className="overlay">
+      <div className="modal">
+        <h2>광팔기</h2>
+        {eligible&&!decided?(
+          <>
+            <p>손패에 <b style={{color:'#C9A227'}}>광이 한 장도 없습니다.</b><br/>
+            광을 팔면 이번 판은 관전하고, 남은 두 명에게서 <b style={{color:'#C9A227'}}>점당 1점({g.perPoint}원)씩</b> 받습니다.</p>
+            <div className="row2">
+              <button className="btn btn-gold" onClick={()=>onDecide('sell')}>광 팔고 쉬기</button>
+              <button className="btn" onClick={()=>onDecide('play')}>그냥 친다</button>
+            </div>
+          </>
+        ):(
+          <p style={{textAlign:'center'}}>
+            {decided?'선택 완료 — ':''}
+            {g.gwangpalEligible.map(nameOfPid).join(', ')} 님의 광팔기 선택을 기다리는 중…</p>
+        )}
+      </div>
+    </div>);
+}
+
+/* ---------- 고/스톱 모달 (예상 정산 미리보기 포함) ---------- */
+function GoStopModal({g,pid,nameOfPid,onChoose}){
+  const isMe=g.pending.pid===pid;
+  const bs=baseScore(g.captured[g.pending.pid]||[]);
+  const final=finalScore(bs.score,g.goCount[g.pending.pid]||0,g.shake[g.pending.pid]||0,g.bomb[g.pending.pid]||0);
+  const losers=g.activePids.filter(p=>p!==g.pending.pid).map(p=>{
+    const lb=baseScore(g.captured[p]||[]);
+    return {pid:p,piCnt:lb.piCnt,gwangCnt:lb.gwangCnt,goCount:g.goCount[p]||0};
+  });
+  const preview=settle({final,perPoint:g.perPoint,losers,
+    winnerFlags:{hasPiScore:bs.hasPiScore,hasGwangScore:bs.hasGwangScore,yeolCnt:bs.yeolCnt}});
+  const goAble=canGo(g,g.pending.pid);
+  if(!isMe)return (
+    <div className="overlay"><div className="modal">
+      <h2>{bs.score}점!</h2>
+      <p style={{textAlign:'center'}}><b style={{color:'#C9A227'}}>{nameOfPid(g.pending.pid)}</b> 님이 고/스톱을 고민 중…</p>
+    </div></div>);
+  return (
+    <div className="overlay">
+      <div className="modal">
+        <h2>{bs.score}점 — 고? 스톱?</h2>
+        <div className="detail-list">{bs.detail.map((d,i)=><div key={i}>{d}</div>)}</div>
+        <p style={{fontSize:13.5}}>지금 <b style={{color:'#C9A227'}}>스톱</b>하면 (배수 포함 {final}점):</p>
+        <div className="detail-list">
+          {losers.map(L=>(
+            <div key={L.pid} style={{display:'flex',justifyContent:'space-between'}}>
+              <span>{nameOfPid(L.pid)}{(preview.notes[L.pid]||[]).map(n=><span key={n} className="bak"> {n}</span>)}</span>
+              <b>{won(preview.pay[L.pid])}</b>
+            </div>))}
+        </div>
+        {!goAble&&<p style={{fontSize:12.5,color:'#ff9a8e'}}>더 진행할 패가 없어 스톱만 가능합니다.</p>}
+        <div className="row2">
+          <button className="btn btn-seal" disabled={!goAble} onClick={()=>onChoose('go')}>
+            고! ({(g.goCount[pid]||0)+1}고)</button>
+          <button className="btn btn-gold" onClick={()=>onChoose('stop')}>스톱 — {won(preview.winTotal)} 획득</button>
+        </div>
+      </div>
+    </div>);
+}
+
+/* ---------- 흔들기/폭탄 확인 ---------- */
+function ShakeBombModal({box,onClose,onBomb,onShake,onPlain}){
+  const c=cardOf(box.cardId);
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        {box.type==='bomb'?(
+          <>
+            <h2>💣 폭탄!</h2>
+            <p>{c.month}월({MONTH_NAMES[c.month-1]}) 3장을 들고 있고 바닥에도 있습니다.<br/>
+            폭탄이면 <b style={{color:'#C9A227'}}>4장 모두 획득 + 상대 피 1장씩 + 점수 ×2</b>, 이후 두 턴은 더미만 뒤집습니다.</p>
+            <div className="row2">
+              <button className="btn btn-seal" onClick={onBomb}>폭탄 치기</button>
+              <button className="btn" onClick={onPlain}>한 장만 내기</button>
+            </div>
+          </>
+        ):(
+          <>
+            <h2>흔들기</h2>
+            <p>{c.month}월({MONTH_NAMES[c.month-1]}) 3장을 들고 있습니다.<br/>
+            흔들고 치면 이 판 점수가 <b style={{color:'#C9A227'}}>×2</b> — 대신 상대에게 패가 공개 선언됩니다.</p>
+            <div className="row2">
+              <button className="btn btn-seal" onClick={onShake}>흔들고 내기</button>
+              <button className="btn" onClick={onPlain}>그냥 내기</button>
+            </div>
+          </>
+        )}
+        <button className="btn btn-ghost btn-sm" style={{width:'100%',marginTop:10}} onClick={onClose}>취소</button>
+      </div>
+    </div>);
+}
+
+/* ---------- 결과 모달 ---------- */
+function ResultModal({g,room,pid,nameOfPid,onNext}){
+  const r=g.result;
+  const players=Object.entries(room.players||{}).map(([id,p])=>({id,...p})).sort((a,b)=>a.seat-b.seat);
+  const isHost=room.hostId===pid;
+  return (
+    <div className="overlay">
+      <div className="modal">
+        {r.nagari?(
+          <>
+            <h2>나가리</h2>
+            <p style={{textAlign:'center'}}>아무도 나지 못했습니다. 이번 판은 무승부!</p>
+          </>
+        ):(
+          <>
+            <h2>{r.reason==='3연뻑'?'3연뻑 즉시 승리!':'승리!'}</h2>
+            <div className="result-win">
+              <div className="who">{nameOfPid(r.winner)}</div>
+              <div className="amt">+{won(r.winTotal)}</div>
+              <div style={{fontSize:13,color:'rgba(243,234,211,.7)',marginTop:2}}>
+                기본 {r.base}점
+                {r.goCount>0&&' · '+r.goCount+'고'}
+                {r.shake>0&&' · 흔들기×'+Math.pow(2,r.shake)}
+                {r.bomb>0&&' · 폭탄×'+Math.pow(2,r.bomb)}
+                {' → 최종 '+r.final+'점'}</div>
+            </div>
+            {r.detail&&r.detail.length>0&&<div className="detail-list">{r.detail.map((d,i)=><div key={i}>{d}</div>)}</div>}
+            <div style={{marginTop:6}}>
+              {Object.entries(r.pay).map(([p,amt])=>(
+                <div key={p} className="pay-row">
+                  <span>{nameOfPid(p)}{(r.notes[p]||[]).map(n=><span key={n} className="bak">{n}</span>)}</span>
+                  <span className="m" style={{color:'#ff9a8e'}}>−{won(amt)}</span>
+                </div>))}
+            </div>
+          </>)}
+        {(r.transfers||[]).length>0&&(
+          <div className="detail-list">
+            <div style={{fontWeight:900,color:'#C9A227',fontSize:12,letterSpacing:1}}>즉시 정산</div>
+            {r.transfers.map((t,i)=>(
+              <div key={i}>{t.reason}: {nameOfPid(t.from)} → {nameOfPid(t.to)} {won(t.amount)}</div>))}
+          </div>)}
+        <div className="cum-table">
+          <div className="t">누적 손익</div>
+          {players.map(p=>(
+            <div key={p.id} className="pay-row">
+              <span>{p.name}</span>
+              <span className={"m "+cumClass(p.cum||0)}>{signedWon(p.cum||0)}</span>
+            </div>))}
+        </div>
+        {isHost?
+          <button className="btn btn-gold" style={{width:'100%',marginTop:14}} onClick={onNext}>대기실로 — 다음 판 준비</button>:
+          <p style={{textAlign:'center',marginTop:14,fontSize:13,color:'rgba(243,234,211,.6)'}}>방장이 다음 판을 준비하면 대기실로 이동합니다</p>}
+      </div>
+    </div>);
+}
+</script>
+<script type="text/babel">
+/* ---------- 카드뉴스 룰 설명 ---------- */
+const RULE_SLIDES=[
+ {icon:'花',title:'화투 한 판, 기본',body:(<div>
+   <p>화투 48장(12개 월 × 4장)으로 승부합니다. 패는 <b>광 · 열끗 · 띠 · 피</b> 네 종류.</p>
+   <ul><li>2명이면 맞고: 각자 10장, 바닥 8장</li><li>3명이면 각자 7장, 바닥 6장, 나머지는 더미</li>
+   <li>내 차례: 손패 1장 내고 → 더미 1장 뒤집기</li>
+   <li>같은 월끼리 짝이 맞으면 획득!</li></ul>
+   <p><b>먼저 3점</b>을 만들면 "고 / 스톱"을 외칠 수 있어요. (2인 맞고 땐 7점)</p></div>)},
+ {icon:'点',title:'점수 계산',body:(<div>
+   <ul><li><b>광</b>: 3광 3점(비광 끼면 2점) · 4광 4점 · 5광 15점</li>
+   <li><b>열끗</b>: 5장부터 장당 1점 · <b>고도리</b>(2·4·8월 새) 5점</li>
+   <li><b>띠</b>: 5장부터 장당 1점 · 홍단/청단/초단 각 3점</li>
+   <li><b>피</b>: 10장부터 장당 1점 · 쌍피는 2장 취급</li></ul></div>)},
+ {icon:'技',title:'특수 규칙',body:(<div>
+   <ul><li><b>쪽</b>: 혼자 낸 패를 뒤집은 패가 바로 짝 맞춤 → 획득 + 상대 피 1장씩!</li>
+   <li><b>뻑(쌌다)</b>: 먹으려는데 뒤집은 패가 같은 월 → 3장 바닥에. 나중에 4번째로 잡으면 싹쓸이 + 피 뺏기</li>
+   <li><b>따닥</b>: 바닥 2장 + 내 패 + 뒤집은 패 = 같은 월 4장 획득 + 피 뺏기</li>
+   <li><b>첫뻑</b> 5점 즉시 수령 · <b>3연뻑</b>은 즉시 승리!</li>
+   <li><b>폭탄</b>: 같은 월 3장 들고 바닥에 1장 → 4장 획득 + ×2</li>
+   <li><b>흔들기</b>: 같은 월 3장 선언하고 치면 ×2</li></ul></div>)},
+ {icon:'고',title:'고? 스톱?',body:(<div>
+   <p>3점(맞고 7점)이 되면 선택!</p>
+   <ul><li><b>스톱</b>: 지금 점수로 정산하고 판 종료</li>
+   <li><b>고</b>: 판을 계속! 1고 +1점, 2고 +2점, <b>3고부터는 매 고마다 ×2</b></li></ul>
+   <p>단, 고를 불렀는데 남이 먼저 나면… 다음 카드의 <b>고박</b>이 기다립니다 😈</p></div>)},
+ {icon:'박',title:'박 — 배수 폭탄',body:(<div>
+   <p>진 사람 사정에 따라 <b>각자</b> 배수가 붙습니다 (모두 ×2, 중복 적용):</p>
+   <ul><li><b>피박</b>: 승자가 피 점수 냈는데 내 피가 1~7장 (0장은 면제)</li>
+   <li><b>광박</b>: 승자가 광 점수 냈는데 내 광이 0장</li>
+   <li><b>멍박</b>: 승자가 열끗 7장 이상 모음</li>
+   <li><b>고박</b>: 고 부르고 진 사람이 <b>다른 패자 몫까지 전부</b> 부담</li></ul></div>)},
+ {icon:'₩',title:'돈 정산',body:(<div>
+   <p style={{textAlign:'center',fontSize:16,margin:'8px 0'}}><b>최종점수 × 점당 × 배수</b></p>
+   <ul><li>배수 = 고 배수 × 피박 × 광박 × 멍박 × 흔들기 × 폭탄</li>
+   <li>진 사람마다 <b>따로 계산</b>해서 승자에게 지급</li>
+   <li>판마다 즉시 정산, 상단에 <b>누적 손익</b>이 계속 표시 (합계는 항상 0)</li></ul>
+   <p>예) 7점 스톱 · 점당 100원 · 피박 → 7×100×2 = <b>1,400원</b></p></div>)},
+ {icon:'光',title:'광팔기',body:(<div>
+   <p>패를 받았는데 <b>광이 한 장도 없다면?</b></p>
+   <ul><li>"광팔기"를 선언하고 이번 판을 쉴 수 있어요</li>
+   <li>남은 두 명에게서 <b>점당 1점씩</b> 받고 관전</li>
+   <li>남은 둘은 2인 맞고로 진행 — 이때는 <b>7점</b>부터 스톱 가능</li></ul></div>)},
+ {icon:'先',title:'4명 이상일 때',body:(<div>
+   <p>2명이면 맞고(둘 다 플레이), 3명이면 셋 다 플레이.</p>
+   <ul><li>4~6명 방에서는 매 판 <b>선(딜러) 1명이 완전 관전</b></li>
+   <li>쉬는 선은 그 판 돈을 <b>주지도 받지도 않습니다</b></li>
+   <li>판이 끝나면 선이 다음 사람으로 넘어가 골고루 쉬어요</li></ul>
+   <p>대기실 명단에서 이번 판 선이 누구인지 확인할 수 있습니다.</p></div>)},
+];
+
+function RulesCardNews({onClose}){
+  const [idx,setIdx]=useState(0);
+  const touchX=useRef(null);
+  const onTS=e=>{touchX.current=e.touches[0].clientX;};
+  const onTE=e=>{
+    if(touchX.current==null)return;
+    const dx=e.changedTouches[0].clientX-touchX.current;
+    if(dx<-40&&idx<RULE_SLIDES.length-1)setIdx(idx+1);
+    if(dx>40&&idx>0)setIdx(idx-1);
+    touchX.current=null;
+  };
+  const s=RULE_SLIDES[idx];
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="cn-wrap" onClick={e=>e.stopPropagation()}>
+        <div className="cn-card" data-num={(idx+1)+' / '+RULE_SLIDES.length}
+          onTouchStart={onTS} onTouchEnd={onTE}>
+          <div className="cn-icon">{s.icon}</div>
+          <h3>{s.title}</h3>
+          <div className="cn-body">{s.body}</div>
+        </div>
+        <div className="cn-nav">
+          <button className="cn-arrow" disabled={idx===0} onClick={()=>setIdx(idx-1)}>‹</button>
+          <div className="cn-dots">
+            {RULE_SLIDES.map((_,i)=><div key={i} className={"cn-dot"+(i===idx?' on':'')}/>)}
+          </div>
+          {idx<RULE_SLIDES.length-1?
+            <button className="cn-arrow" onClick={()=>setIdx(idx+1)}>›</button>:
+            <button className="cn-arrow" style={{fontSize:14}} onClick={onClose}>✕</button>}
+        </div>
+      </div>
+    </div>);
+}
+
+class ErrorBoundary extends React.Component{
+  constructor(p){super(p);this.state={err:null};}
+  static getDerivedStateFromError(e){return {err:e};}
+  componentDidCatch(e,info){try{console.error('게임 오류:',e,info);}catch(_){}}
+  render(){
+    if(this.state.err){
+      return (
+        <div style={{padding:'44px 22px',textAlign:'center',color:'#F3EAD3',maxWidth:420,margin:'0 auto'}}>
+          <div style={{fontSize:40,marginBottom:10}}>🎴</div>
+          <h2 style={{marginBottom:8}}>화면을 불러오다 문제가 생겼어요</h2>
+          <p style={{fontSize:13,opacity:.82,lineHeight:1.7,marginBottom:18}}>
+            이전에 진행하던 방 정보가 꼬였을 수 있어요.<br/>아래 버튼으로 방에서 나와 처음부터 다시 시작해 주세요.</p>
+          <button className="btn btn-gold"
+            onClick={()=>{try{localStorage.removeItem('gs_room');}catch(_){}; location.reload();}}>
+            처음으로 (방 나가기)</button>
+          <pre style={{textAlign:'left',fontSize:11,opacity:.5,marginTop:18,whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
+            {String((this.state.err&&this.state.err.message)||this.state.err)}</pre>
+        </div>);
+    }
+    return this.props.children;
+  }
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
+</script>
+</body>
+</html>
